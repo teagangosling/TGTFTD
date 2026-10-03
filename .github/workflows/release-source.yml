@@ -13,6 +13,8 @@ on:
         value: ${{ jobs.source.outputs.folder }}
       survey_key:
         value: ${{ jobs.source.outputs.survey_key }}
+      sha:
+        value: ${{ jobs.source.outputs.sha }}
 
 jobs:
   source:
@@ -26,6 +28,7 @@ jobs:
       trigger_type: ${{ steps.metadata.outputs.trigger_type }}
       folder: ${{ steps.metadata.outputs.folder }}
       survey_key: ${{ steps.survey_key.outputs.survey_key }}
+      sha: ${{ steps.metadata.outputs.sha }}
 
     steps:
     - name: Checkout (Release)
@@ -152,6 +155,7 @@ jobs:
         echo "is_tag=${IS_TAG}" >> $GITHUB_OUTPUT
         echo "folder=${FOLDER}" >> $GITHUB_OUTPUT
         echo "trigger_type=${TRIGGER_TYPE}" >> $GITHUB_OUTPUT
+        echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
       env:
         NIGHTLIES_BRANCH: master
         FOLDER_RELEASES: openttd-releases
