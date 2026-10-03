@@ -1,7 +1,10 @@
 name: Release
 
-# TGTFTD release: builds Windows x64 and macOS Apple Silicon (arm64) and publishes them as a GitHub Release.
-# Run it from the Actions tab ("Run workflow"), with the branch or tag to build as "ref".
+# TGTFTD release: builds Windows x64 and macOS Apple Silicon (arm64) bundles as workflow artifacts.
+# Run it from the Actions tab ("Run workflow"), with the branch or tag to build as "ref" (e.g. tgtftd-0.1.1).
+#
+# The GitHub release itself is published from a local machine with tools/publish_release.py, which downloads
+# these artifacts and uploads the plain bundle files (the Actions token is not allowed to create releases here).
 
 on:
   workflow_dispatch:
@@ -38,46 +41,3 @@ jobs:
     with:
       is_tag: ${{ needs.source.outputs.is_tag }}
       survey_key: ${{ needs.source.outputs.survey_key }}
-
-  publish:
-    name: Publish GitHub Release
-    needs:
-    - source
-    - macos
-    - windows
-
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    steps:
-    - name: Download bundles
-      uses: actions/download-artifact@v8
-      with:
-        pattern: openttd-*
-        path: bundles
-        merge-multiple: true
-
-    - name: List bundles
-      run: ls -la bundles
-
-    - name: Publish release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: ${{ needs.source.outputs.version }}
-        # Must be a branch or commit SHA (a tag name is rejected with 422), so use the commit that was built.
-        target_commitish: ${{ needs.source.outputs.sha }}
-        name: TGTFTD ${{ needs.source.outputs.version }}
-        prerelease: ${{ !startsWith(needs.source.outputs.version, 'tgtftd-') }}
-        body: |
-          TGTFTD build ${{ needs.source.outputs.version }}, based on JGR's Patch Pack.
-
-          * **Windows (x64)**: download the `windows-win64` zip, extract it and run `openttd.exe`.
-          * **macOS (Apple Silicon, M1 or newer)**: download the `macos` zip and extract it. The app is not signed by Apple: right-click it and choose **Open** the first time, or run `xattr -dr com.apple.quarantine /path/to/OpenTTD.app`.
-
-          You still need base graphics (OpenGFX can be downloaded from the in-game "Check online content" menu, or copy the original TTD files).
-
-          Seaplane and seaplane terminal NewGRF documentation: see `docs/tgtftd-seaplanes.md` in the repository.
-        files: bundles/*
-        fail_on_unmatched_files: false
