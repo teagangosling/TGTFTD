@@ -1359,7 +1359,8 @@ static CommandCost CheckFlatLandAirport(AirportTileTableIterator tile_iter, DoCo
 				}
 			}
 		} else {
-			ret = Command<Commands::LandscapeClear>::Do(flags, tile_cur);
+			/* The build airport command has no CMD_NO_WATER, as seaplane terminals are built on water. */
+			ret = Command<Commands::LandscapeClear>::Do(flags | DoCommandFlag::NoWater, tile_cur);
 			if (ret.Failed()) return ret;
 			cost.AddCost(ret.GetCost());
 		}

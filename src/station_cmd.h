@@ -19,7 +19,7 @@
 enum RailType : uint8_t;
 enum RoadType : uint8_t;
 
-DEF_CMD_TUPLE   (Commands::BuildAirport,                   CmdBuildAirport,     CMD_NO_WATER | CMD_AUTO, CommandType::LandscapeConstruction, CmdDataT<uint8_t, uint8_t, StationID, bool>)
+DEF_CMD_TUPLE   (Commands::BuildAirport,                   CmdBuildAirport,                    CMD_AUTO, CommandType::LandscapeConstruction, CmdDataT<uint8_t, uint8_t, StationID, bool>)
 DEF_CMD_TUPLE   (Commands::BuildDock,                      CmdBuildDock,                       CMD_AUTO, CommandType::LandscapeConstruction, CmdDataT<StationID, bool>)
 DEF_CMD_TUPLE   (Commands::BuildRailStation,               CmdBuildRailStation, CMD_NO_WATER | CMD_AUTO, CommandType::LandscapeConstruction, CmdDataT<RailType, Axis, uint8_t, uint8_t, StationClassID, uint16_t, StationID, bool>)
 DEF_CMD_TUPLE   (Commands::RemoveFromRailStation,          CmdRemoveFromRailStation,                 {}, CommandType::LandscapeConstruction, CmdDataT<TileIndex, bool>)
