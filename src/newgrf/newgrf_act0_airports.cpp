@@ -173,6 +173,7 @@ static ChangeInfoResult AirportChangeInfo(uint first, uint last, int prop, const
 				const AirportSpec *orig = AirportSpec::GetWithoutOverride(static_cast<uint8_t>(as->grf_prop.subst_id));
 				if (!seaplane) {
 					as->fsm = orig->fsm;
+					as->class_index = orig->class_index;
 					break;
 				}
 				const AirportFTAClass *fsm = GetSeaplaneAirportFTA(orig->fsm);
@@ -180,7 +181,9 @@ static ChangeInfoResult AirportChangeInfo(uint first, uint last, int prop, const
 					GrfMsg(2, "AirportChangeInfo: Substitute airport {} of airport {} has no seaplane terminal variant (heliports cannot be seaplane terminals). Ignoring.", as->grf_prop.subst_id, id);
 					break;
 				}
+				/* Use the seaplane variant of the substitute airport's state machine and list it with the seaplane terminals. */
 				as->fsm = fsm;
+				as->class_index = APC_SEAPLANE;
 				break;
 			}
 

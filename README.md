@@ -1,3 +1,14 @@
+## TGTFTD (based on JGR's Patchpack 0.73.3)
+
+TGTFTD is a fork of [JGR's Patchpack](https://github.com/JGRennison/OpenTTD-patches) that adds **seaplanes** and **seaplane terminals** (airports built on water).
+
+* Build a *Seaplane Dock* or *Seaplane Harbour* (airport window, "Seaplane terminals") on flat sea, canal or river.
+* Seaplanes are aircraft marked by a NewGRF; they can only use seaplane terminals, and seaplane terminals only accept seaplanes.
+* NewGRF authors: see [docs/tgtftd-seaplanes.md](docs/tgtftd-seaplanes.md) for how to make seaplane and seaplane terminal NewGRFs, and [docs/tgtftd/examples](docs/tgtftd/examples) for a test NewGRF.
+* Downloads for Windows and macOS: see the [Releases](https://github.com/teagangosling/TGTFTD/releases) page.
+
+* * *
+
 ## JGR's Patchpack version 0.73.3
 
 This is a collection of features and other modifications applied to [OpenTTD](http://www.openttd.org/).  
