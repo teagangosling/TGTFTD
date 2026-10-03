@@ -59,6 +59,27 @@ HELIPORT(helistation, 3, 0)
 HELIPORT(oilrig, 1, 54)
 AIRPORT_GENERIC(dummy, nullptr, 0, AirportFTAClass::Flags({AirportFTAClass::Flag::Airplanes, AirportFTAClass::Flag::Helicopters}), 0)
 
+/**
+ * Define the seaplane terminal variant of an airport.
+ * It shares the movement data and state machine of the land airport, but only seaplanes may use it.
+ * @param name Suffix of the names of the airport data.
+ * @param num_helipads Number of heli pads (unused by seaplanes, kept so the state machine is unchanged).
+ * @param short_strip Airport has a short land/take-off strip.
+ */
+#define SEAPLANE_AIRPORT(name, num_helipads, short_strip) \
+	static const AirportFTAClass _airportfta_seaplane_ ## name(_airport_moving_data_ ## name, _airport_terminal_ ## name, \
+			num_helipads, _airport_entries_ ## name, \
+			AirportFTAClass::Flags{AirportFTAClass::Flag::Seaplanes} | (short_strip ? AirportFTAClass::Flags{AirportFTAClass::Flag::ShortStrip} : AirportFTAClass::Flags{}), \
+			_airport_fta_ ## name, 0);
+
+SEAPLANE_AIRPORT(country, 0, true)
+SEAPLANE_AIRPORT(city, 0, false)
+SEAPLANE_AIRPORT(metropolitan, 0, false)
+SEAPLANE_AIRPORT(international, 2, false)
+SEAPLANE_AIRPORT(commuter, 2, true)
+SEAPLANE_AIRPORT(intercontinental, 2, false)
+
+#undef SEAPLANE_AIRPORT
 #undef HELIPORT
 #undef AIRPORT
 #undef AIRPORT_GENERIC
@@ -189,6 +210,23 @@ const AirportFTAClass *GetAirport(const uint8_t airport_type)
 {
 	if (airport_type == AT_DUMMY) return &_airportfta_dummy;
 	return AirportSpec::Get(airport_type)->fsm;
+}
+
+/**
+ * Get the seaplane terminal variant of a land airport state machine.
+ * @param fta State machine of a land airport.
+ * @return The seaplane variant, \a fta itself if it already is one, or \c nullptr if the airport has no seaplane variant (e.g. heliports).
+ */
+const AirportFTAClass *GetSeaplaneAirportFTA(const AirportFTAClass *fta)
+{
+	if (fta == nullptr || fta->IsSeaplaneTerminal()) return fta;
+	if (fta == &_airportfta_country) return &_airportfta_seaplane_country;
+	if (fta == &_airportfta_city) return &_airportfta_seaplane_city;
+	if (fta == &_airportfta_metropolitan) return &_airportfta_seaplane_metropolitan;
+	if (fta == &_airportfta_international) return &_airportfta_seaplane_international;
+	if (fta == &_airportfta_commuter) return &_airportfta_seaplane_commuter;
+	if (fta == &_airportfta_intercontinental) return &_airportfta_seaplane_intercontinental;
+	return nullptr;
 }
 
 /**

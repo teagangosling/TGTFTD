@@ -3203,7 +3203,7 @@ LiveryScheme GetEngineLiveryScheme(EngineID engine_type, EngineID parent_engine_
 			return IsCargoInClass(cargo_type, CargoClass::Passengers) ? LiveryScheme::PassengerShip : LiveryScheme::FreightShip;
 
 		case VehicleType::Aircraft:
-			switch (e->VehInfo<AircraftVehicleInfo>().subtype) {
+			switch (e->VehInfo<AircraftVehicleInfo>().subtype & (AIR_CTOL | AIR_FAST)) { // Seaplanes use the plane liveries
 				case AIR_HELI: return LiveryScheme::Helicopter;
 				case AIR_CTOL: return LiveryScheme::SmallPlane;
 				case AIR_CTOL | AIR_FAST: return LiveryScheme::LargePlane;
@@ -4806,7 +4806,7 @@ bool CanVehicleUseStation(EngineID engine_type, const Station *st)
 
 		case VehicleType::Aircraft:
 			return st->facilities.Test(StationFacility::Airport) &&
-					st->airport.GetFTA()->flags.Test(e->VehInfo<AircraftVehicleInfo>().subtype & AIR_CTOL ? AirportFTAClass::Flag::Airplanes : AirportFTAClass::Flag::Helicopters);
+					st->airport.GetFTA()->flags.Test(AirportFTAClass::GetRequiredFlag(e->VehInfo<AircraftVehicleInfo>().subtype));
 
 		default:
 			return false;
@@ -4867,10 +4867,12 @@ StringID GetVehicleCannotUseStationReason(const Vehicle *v, const Station *st)
 
 		case VehicleType::Aircraft:
 			if (!st->facilities.Test(StationFacility::Airport)) return STR_ERROR_NO_AIRPORT;
-			if (v->GetEngine()->VehInfo<AircraftVehicleInfo>().subtype & AIR_CTOL) {
-				return STR_ERROR_AIRPORT_NO_PLANES;
-			} else {
-				return STR_ERROR_AIRPORT_NO_HELICOPTERS;
+			switch (AirportFTAClass::GetRequiredFlag(v->GetEngine()->VehInfo<AircraftVehicleInfo>().subtype)) {
+				case AirportFTAClass::Flag::Seaplanes: return STR_ERROR_AIRPORT_NO_SEAPLANES;
+				case AirportFTAClass::Flag::Airplanes:
+					return st->airport.GetFTA()->IsSeaplaneTerminal() ? STR_ERROR_SEAPLANE_TERMINAL_NO_PLANES : STR_ERROR_AIRPORT_NO_PLANES;
+				default:
+					return st->airport.GetFTA()->IsSeaplaneTerminal() ? STR_ERROR_SEAPLANE_TERMINAL_NO_PLANES : STR_ERROR_AIRPORT_NO_HELICOPTERS;
 			}
 
 		default:

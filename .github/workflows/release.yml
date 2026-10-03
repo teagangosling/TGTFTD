@@ -1,18 +1,15 @@
 name: Release
 
+# TGTFTD release: builds Windows (x64, arm64) and macOS (universal) and publishes them as a GitHub Release.
+# Run it from the Actions tab ("Run workflow"), with the branch or tag to build as "ref".
+
 on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Ref to build (for Pull Requests, use refs/pull/NNN/head)'
+        description: 'Branch or tag to build (e.g. seaplanes or tgtftd-0.1.0)'
         required: true
-#  repository_dispatch:
-#    # client_payload should be the same as the inputs for workflow_dispatch.
-#    types:
-#    - Build*
-#  release:
-#    types:
-#    - published
+        default: 'seaplanes'
 
 jobs:
   source:
@@ -20,46 +17,6 @@ jobs:
 
     uses: ./.github/workflows/release-source.yml
     secrets: inherit
-
-  docs:
-    name: Docs
-    needs: source
-
-    uses: ./.github/workflows/release-docs.yml
-    secrets: inherit
-
-    with:
-      version: ${{ needs.source.outputs.version }}
-
-  linux:
-    name: Linux (Generic)
-    needs: source
-
-    uses: ./.github/workflows/release-linux.yml
-    secrets: inherit
-
-    with:
-      survey_key: ${{ needs.source.outputs.survey_key }}
-
-  linux_distros:
-    name: Linux (Distros)
-    needs: source
-
-    uses: ./.github/workflows/release-linux-distros.yml
-    secrets: inherit
-
-    with:
-      survey_key: ${{ needs.source.outputs.survey_key }}
-
-  linux-dedicated:
-    name: Linux (Dedicated)
-    needs: source
-
-    uses: ./.github/workflows/release-linux-dedicated.yml
-    secrets: inherit
-
-    with:
-      survey_key: ${{ needs.source.outputs.survey_key }}
 
   macos:
     name: MacOS
@@ -81,3 +38,45 @@ jobs:
     with:
       is_tag: ${{ needs.source.outputs.is_tag }}
       survey_key: ${{ needs.source.outputs.survey_key }}
+
+  publish:
+    name: Publish GitHub Release
+    needs:
+    - source
+    - macos
+    - windows
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download bundles
+      uses: actions/download-artifact@v8
+      with:
+        pattern: openttd-*
+        path: bundles
+        merge-multiple: true
+
+    - name: List bundles
+      run: ls -la bundles
+
+    - name: Publish release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ needs.source.outputs.version }}
+        target_commitish: ${{ github.event.inputs.ref }}
+        name: TGTFTD ${{ needs.source.outputs.version }}
+        prerelease: ${{ !startsWith(needs.source.outputs.version, 'tgtftd-') }}
+        body: |
+          TGTFTD build ${{ needs.source.outputs.version }}, based on JGR's Patch Pack.
+
+          * **Windows**: download the `windows-win64` (or `windows-arm64`) zip, extract it and run `openttd.exe`.
+          * **macOS**: download the `macos-universal` zip and extract it. The app is not signed by Apple: right-click it and choose **Open** the first time, or run `xattr -dr com.apple.quarantine /path/to/OpenTTD.app`.
+
+          You still need base graphics (OpenGFX can be downloaded from the in-game "Check online content" menu, or copy the original TTD files).
+
+          Seaplane and seaplane terminal NewGRF documentation: see `docs/tgtftd-seaplanes.md` in the repository.
+        files: bundles/*
+        fail_on_unmatched_files: false

@@ -11,6 +11,7 @@
 #include "../debug.h"
 #include "../newgrf_airporttiles.h"
 #include "../newgrf_airport.h"
+#include "../newgrf_extension.h"
 #include "newgrf_bytereader.h"
 #include "newgrf_internal.h"
 #include "newgrf_stringmapping.h"
@@ -165,6 +166,23 @@ static ChangeInfoResult AirportChangeInfo(uint first, uint last, int prop, const
 			case 0x12: // Badge list
 				as->badges = ReadBadgeList(buf, GrfSpecFeature::Airports);
 				break;
+
+			case A0RPI_AIRPORT_SEAPLANE_TERMINAL: {
+				if (MappedPropertyLengthMismatch(buf, 1, mapping_entry)) break;
+				const bool seaplane = buf.ReadByte() != 0;
+				const AirportSpec *orig = AirportSpec::GetWithoutOverride(static_cast<uint8_t>(as->grf_prop.subst_id));
+				if (!seaplane) {
+					as->fsm = orig->fsm;
+					break;
+				}
+				const AirportFTAClass *fsm = GetSeaplaneAirportFTA(orig->fsm);
+				if (fsm == nullptr) {
+					GrfMsg(2, "AirportChangeInfo: Substitute airport {} of airport {} has no seaplane terminal variant (heliports cannot be seaplane terminals). Ignoring.", as->grf_prop.subst_id, id);
+					break;
+				}
+				as->fsm = fsm;
+				break;
+			}
 
 			default:
 				ret = HandleAction0PropertyDefault(buf, prop);

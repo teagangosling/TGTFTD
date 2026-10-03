@@ -147,8 +147,8 @@ static StationID FindNearestHangar(const Aircraft *v)
 		/* don't crash the plane if we know it can't land at the airport */
 		if (afc->flags.Test(AirportFTAClass::Flag::ShortStrip) && (avi->subtype & AIR_FAST) && !_cheats.no_jetcrash.value) continue;
 
-		/* the plane won't land at any helicopter station */
-		if (!afc->flags.Test(AirportFTAClass::Flag::Airplanes) && (avi->subtype & AIR_CTOL)) continue;
+		/* the plane won't land at any helicopter station, seaplanes only land at seaplane terminals and nothing else does */
+		if (!afc->flags.Test(AirportFTAClass::GetRequiredFlag(avi->subtype))) continue;
 
 		/* Check if our last and next destinations can be reached from the depot airport. */
 		if (max_range != 0) {

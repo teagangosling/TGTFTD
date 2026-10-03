@@ -41,6 +41,9 @@ enum AirportTypes : uint8_t {
 	NEW_AIRPORT_OFFSET =  10, ///< Number of the first newgrf airport.
 	NUM_AIRPORTS_PER_GRF = 128, ///< Maximal number of airports per NewGRF.
 	NUM_AIRPORTS       = 128, ///< Maximal number of airports in total.
+	AT_SEAPLANE_SMALL  = NUM_AIRPORTS - 2, ///< Small seaplane terminal (TGTFTD). Kept at the top of the range so NewGRF airport IDs are unchanged.
+	AT_SEAPLANE_LARGE  = NUM_AIRPORTS - 1, ///< Large seaplane terminal (TGTFTD).
+	NUM_NEWGRF_AIRPORT_SLOTS = AT_SEAPLANE_SMALL, ///< NewGRF airports are allocated below this index.
 	AT_INVALID         = 254, ///< Invalid airport.
 	AT_DUMMY           = 255, ///< Dummy airport.
 };
@@ -167,6 +170,7 @@ public:
 		Airplanes   = 0, ///< Can planes land on this airport type?
 		Helicopters = 1, ///< Can helicopters land on this airport type?
 		ShortStrip  = 2, ///< This airport has a short landing strip, dangerous for fast aircraft.
+		Seaplanes   = 3, ///< Seaplane terminal: built on water, only seaplanes can land here.
 	};
 
 	/** Bitset of \c Flag elements. */
@@ -201,10 +205,26 @@ public:
 	uint8_t nofelements;                  ///< number of positions the airport consists of
 	const uint8_t *entry_points;          ///< when an airplane arrives at this airport, enter it at position entry_point, index depends on direction
 	uint8_t delta_z;                      ///< Z adjustment for helicopter pads
+
+	/** Is this a seaplane terminal (built on water, seaplanes only)? */
+	bool IsSeaplaneTerminal() const { return this->flags.Test(Flag::Seaplanes); }
+
+	/**
+	 * Get the airport flag an aircraft of the given subtype needs to use this airport.
+	 * @param subtype AircraftVehicleInfo::subtype (AircraftSubTypeBits).
+	 * @return The required flag.
+	 */
+	static Flag GetRequiredFlag(uint8_t subtype)
+	{
+		/* AIR_CTOL = 1, AIR_SEAPLANE = 4, see engine_type.h. Helicopters ignore the seaplane bit. */
+		if ((subtype & 1) == 0) return Flag::Helicopters;
+		return (subtype & 4) != 0 ? Flag::Seaplanes : Flag::Airplanes;
+	}
 };
 
 
 const AirportFTAClass *GetAirport(const uint8_t airport_type);
+const AirportFTAClass *GetSeaplaneAirportFTA(const AirportFTAClass *fta);
 uint8_t GetVehiclePosOnBuild(TileIndex hangar_tile);
 
 #endif /* AIRPORT_H */

@@ -357,6 +357,77 @@ static const std::initializer_list<AirportTileLayout> _tile_table_helistation = 
 	{ _tile_table_helistation_0, Direction::N },
 };
 
+/*
+ * Seaplane terminals (TGTFTD).
+ * Built on water: the ground sprite of every tile is replaced by water, so tiles whose
+ * layout only has a ground sprite show as open water and only building child sprites
+ * (terminals, piers, hangars) remain visible.
+ */
+
+/** Tiles for the small seaplane terminal, uses the Country Airfield state machine. */
+static const std::initializer_list<AirportTileTable> _tile_table_seaplane_small_0 = {
+	MK(0, 0, APT_LOW_BUILDING),
+	MK(1, 0, APT_BUILDING_1),
+	MK(2, 0, APT_LOW_BUILDING),
+	MK(3, 0, APT_SMALL_DEPOT_SE),
+	MK(0, 1, APT_APRON),
+	MK(1, 1, APT_APRON),
+	MK(2, 1, APT_APRON),
+	MK(3, 1, APT_APRON),
+	MK(0, 2, APT_APRON),
+	MK(1, 2, APT_APRON),
+	MK(2, 2, APT_APRON),
+	MK(3, 2, APT_APRON),
+};
+
+static const std::initializer_list<AirportTileLayout> _tile_table_seaplane_small = {
+	{ _tile_table_seaplane_small_0, Direction::N },
+};
+
+/** Tiles for the large seaplane terminal, uses the City Airport state machine. */
+static const std::initializer_list<AirportTileTable> _tile_table_seaplane_large_0 = {
+	MK(0, 0, APT_BUILDING_1),
+	MK(1, 0, APT_APRON),
+	MK(2, 0, APT_STAND_1),
+	MK(3, 0, APT_APRON),
+	MK(4, 0, APT_APRON),
+	MK(5, 0, APT_DEPOT_SE),
+	MK(0, 1, APT_BUILDING_2),
+	MK(1, 1, APT_PIER),
+	MK(2, 1, APT_ROUND_TERMINAL),
+	MK(3, 1, APT_STAND_PIER_NE),
+	MK(4, 1, APT_APRON),
+	MK(5, 1, APT_APRON),
+	MK(0, 2, APT_BUILDING_3),
+	MK(1, 2, APT_STAND),
+	MK(2, 2, APT_PIER_NW_NE),
+	MK(3, 2, APT_APRON),
+	MK(4, 2, APT_APRON),
+	MK(5, 2, APT_APRON),
+	MK(0, 3, APT_TOWER),
+	MK(1, 3, APT_APRON),
+	MK(2, 3, APT_APRON),
+	MK(3, 3, APT_APRON),
+	MK(4, 3, APT_APRON),
+	MK(5, 3, APT_APRON),
+	MK(0, 4, APT_APRON),
+	MK(1, 4, APT_APRON),
+	MK(2, 4, APT_APRON),
+	MK(3, 4, APT_APRON),
+	MK(4, 4, APT_APRON),
+	MK(5, 4, APT_APRON),
+	MK(0, 5, APT_APRON),
+	MK(1, 5, APT_APRON),
+	MK(2, 5, APT_APRON),
+	MK(3, 5, APT_APRON),
+	MK(4, 5, APT_APRON),
+	MK(5, 5, APT_APRON),
+};
+
+static const std::initializer_list<AirportTileLayout> _tile_table_seaplane_large = {
+	{ _tile_table_seaplane_large_0, Direction::N },
+};
+
 #undef MK
 
 /** General AirportSpec definition. */
@@ -388,6 +459,18 @@ extern const AirportSpec _origin_airport_specs[] = {
 };
 
 static_assert(NEW_AIRPORT_OFFSET == lengthof(_origin_airport_specs));
+
+/** Built-in seaplane terminals, stored at AirportSpec slots #NUM_NEWGRF_AIRPORT_SLOTS and up. */
+extern const AirportSpec _seaplane_airport_specs[] = {
+	AS_GENERIC(&_airportfta_seaplane_country, _tile_table_seaplane_small, _airport_depots_country,
+		4, 3, 2, 4, 1920, CalTime::MAX_YEAR, 6, ATP_TTDP_SMALL, APC_SEAPLANE, STR_AIRPORT_SEAPLANE_SMALL, SPR_AIRPORT_PREVIEW_SMALL, true),
+	AS_GENERIC(&_airportfta_seaplane_city, _tile_table_seaplane_large, _airport_depots_city,
+		6, 6, 4, 5, 1935, CalTime::MAX_YEAR, 18, ATP_TTDP_LARGE, APC_SEAPLANE, STR_AIRPORT_SEAPLANE_LARGE, SPR_AIRPORT_PREVIEW_LARGE, true),
+};
+
+static_assert(AT_SEAPLANE_SMALL == NUM_NEWGRF_AIRPORT_SLOTS + 0);
+static_assert(AT_SEAPLANE_LARGE == NUM_NEWGRF_AIRPORT_SLOTS + 1);
+static_assert(NUM_AIRPORTS - NUM_NEWGRF_AIRPORT_SLOTS == lengthof(_seaplane_airport_specs));
 
 const AirportSpec AirportSpec::dummy = AS_GENERIC(&_airportfta_dummy, {}, {}, 0, 0, 0, 0, CalTime::MIN_YEAR, CalTime::MIN_YEAR, 0, ATP_TTDP_LARGE, {}, STR_NULL, 0, false);
 

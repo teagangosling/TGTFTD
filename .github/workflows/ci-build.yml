@@ -2,48 +2,34 @@ name: CI - Build
 
 on:
   pull_request:
-#  push:
-#    branches:
-#    - master
+  push:
+    branches:
+    - seaplanes
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Ref to build (for Pull Requests, use refs/pull/NNN/head)'
-        required: true
+        description: 'Ref to build (for Pull Requests, use refs/pull/NNN/head; empty = current branch)'
+        required: false
+        default: ''
 
 env:
   CTEST_OUTPUT_ON_FAILURE: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  cancel-in-progress: true
 
+# TGTFTD: trimmed to one build per desktop platform to keep CI minutes low.
 jobs:
-  emscripten:
-    name: Emscripten
-
-    uses: ./.github/workflows/ci-emscripten.yml
-    secrets: inherit
-
   linux:
     strategy:
       fail-fast: false
       matrix:
         include:
-        - name: Clang
-          compiler: clang
-          cxxcompiler: clang++
-          libraries: libsdl2-dev
         - name: GCC - SDL2
           compiler: gcc
           cxxcompiler: g++
           libraries: libsdl2-dev
-        - name: GCC - Dedicated
-          compiler: gcc
-          cxxcompiler: g++
-          libraries: grfcodec
-          extra-cmake-parameters: -DOPTION_DEDICATED=ON -DCMAKE_CXX_FLAGS_INIT="-DRANDOM_DEBUG" -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
-          # Compile without SDL / SDL2, as that should compile fine too.
 
     name: Linux (${{ matrix.name }})
 
@@ -61,10 +47,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - name: arm64 - Debug
-          arch: arm64
-          full_arch: arm64
-          extra-cmake-parameters: -DCMAKE_BUILD_TYPE=Debug
         - name: arm64 - Release
           arch: arm64
           full_arch: arm64
@@ -85,7 +67,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - arch: x86
         - arch: x64
 
     name: Windows (${{ matrix.arch }})
@@ -99,7 +80,6 @@ jobs:
   check_annotations:
     name: Check Annotations
     needs:
-    - emscripten
     - linux
     - macos
     - windows

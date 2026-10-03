@@ -8,6 +8,7 @@
 /** @file autoreplace_cmd.cpp Deals with autoreplace execution but not the setup. */
 
 #include "stdafx.h"
+#include "airport.h"
 #include "company_func.h"
 #include "train.h"
 #include "command_func.h"
@@ -90,6 +91,8 @@ bool CheckAutoreplaceValidity(EngineID from, EngineID to, CompanyID company)
 		case VehicleType::Aircraft:
 			/* make sure that we do not replace a plane with a helicopter or vice versa */
 			if ((e_from->VehInfo<AircraftVehicleInfo>().subtype & AIR_CTOL) != (e_to->VehInfo<AircraftVehicleInfo>().subtype & AIR_CTOL)) return false;
+			/* Seaplanes and other aircraft use different airports. */
+			if (AirportFTAClass::GetRequiredFlag(e_from->VehInfo<AircraftVehicleInfo>().subtype) != AirportFTAClass::GetRequiredFlag(e_to->VehInfo<AircraftVehicleInfo>().subtype)) return false;
 			break;
 
 		default: break;

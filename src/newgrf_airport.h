@@ -81,6 +81,7 @@ static constexpr AirportClassID APC_SMALL{0}; ///< id for small airports class.
 static constexpr AirportClassID APC_LARGE{1}; ///< id for large airports class.
 static constexpr AirportClassID APC_HUB{2}; ///< id for hub airports class.
 static constexpr AirportClassID APC_HELIPORT{3}; ///< id for heliports.
+static constexpr AirportClassID APC_SEAPLANE{4}; ///< id for seaplane terminals.
 
 /** TTDP airport types. Used to map our types to TTDPatch's */
 enum TTDPAirportType : uint8_t {

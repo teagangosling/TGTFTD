@@ -536,7 +536,7 @@ StringID Engine::GetAircraftTypeText() const
 {
 	switch (this->type) {
 		case VehicleType::Aircraft:
-			switch (this->VehInfo<AircraftVehicleInfo>().subtype) {
+			switch (this->VehInfo<AircraftVehicleInfo>().subtype & (AIR_CTOL | AIR_FAST)) { // Seaplanes use the plane liveries
 				case AIR_HELI: return STR_LIVERY_HELICOPTER;
 				case AIR_CTOL: return STR_LIVERY_SMALL_PLANE;
 				case AIR_CTOL | AIR_FAST: return STR_LIVERY_LARGE_PLANE;

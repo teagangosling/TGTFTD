@@ -2617,3 +2617,10 @@ STR_CONFIG_SETTING_NEWS_CARGO_FLOW                              :Overflowing car
 STR_CONFIG_SETTING_NEWS_CARGO_FLOW_HELPTEXT                     :Warn about stations where cargo is accumulating.{}The detection is based on shape of the cargo history graph, not on specific amount threshold.
 
 STR_STATION_CARGO_OVERFLOW                                      :{WHITE}{CARGO_LIST} overflowing at {STATION}
+
+STR_AIRPORT_CLASS_SEAPLANE                                      :Seaplane terminals
+STR_AIRPORT_SEAPLANE_SMALL                                      :Seaplane Dock
+STR_AIRPORT_SEAPLANE_LARGE                                      :Seaplane Harbour
+STR_ERROR_SEAPLANE_TERMINAL_MUST_BE_ON_WATER                    :seaplane terminals must be built on flat open water
+STR_ERROR_AIRPORT_NO_SEAPLANES                                  :This seaplane can only land at seaplane terminals
+STR_ERROR_SEAPLANE_TERMINAL_NO_PLANES                           :Only seaplanes can use this seaplane terminal

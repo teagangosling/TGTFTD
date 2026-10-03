@@ -784,7 +784,7 @@ bool IsWateredTile(TileIndex tile, Direction from)
 
 				return IsTileOnWater(tile);
 			}
-			return (IsDock(tile) && IsTileFlat(tile)) || IsBuoy(tile);
+			return (IsDock(tile) && IsTileFlat(tile)) || IsBuoy(tile) || (IsAirport(tile) && IsTileOnWater(tile));
 
 		case TileType::Industry: {
 			/* Do not draw waterborders inside of industries.
@@ -1457,8 +1457,8 @@ void TileLoopWaterFlooding(FloodingBehaviour flooding_behaviour, TileIndex tile)
 				/* do not try to flood water tiles - increases performance a lot */
 				if (IsTileType(dest, TileType::Water)) continue;
 
-				/* Buoys and docks cannot be flooded, and when removed turn into flooding water. */
-				if (IsTileType(dest, TileType::Station) && (IsBuoy(dest) || IsDock(dest))) continue;
+				/* Buoys, docks and seaplane terminals cannot be flooded, and when removed turn into flooding water. */
+				if (IsTileType(dest, TileType::Station) && (IsBuoy(dest) || IsDock(dest) || (IsAirport(dest) && IsTileOnWater(dest)))) continue;
 
 				/* This neighbour tile might be floodable later if the tile is cleared, so allow flooding to continue. */
 				continue_flooding = true;

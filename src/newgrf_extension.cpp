@@ -75,6 +75,7 @@ extern const GRFFeatureInfo _grf_feature_list[] = {
 	GRFFeatureInfo("multi_part_ships", 3, GFTOF_MULTI_PART_SHIPS),
 	GRFFeatureInfo("more_stations_per_grf", 1),
 	GRFFeatureInfo("varaction2_house_uncapped_building_counts", 1),
+	GRFFeatureInfo("tgtftd_seaplanes", 1),
 	GRFFeatureInfo(),
 };
 
@@ -149,6 +150,8 @@ extern const GRFPropertyMapDefinition _grf_action0_remappable_properties[] = {
 	GRFPropertyMapDefinition(GrfSpecFeature::RoadStops, A0RPI_ROADSTOP_HEIGHT, "roadstop_height"),
 	GRFPropertyMapDefinition(GrfSpecFeature::NewLandscape, A0RPI_NEWLANDSCAPE_ENABLE_RECOLOUR, "newlandscape_enable_recolour"),
 	GRFPropertyMapDefinition(GrfSpecFeature::NewLandscape, A0RPI_NEWLANDSCAPE_ENABLE_DRAW_SNOWY_ROCKS, "newlandscape_enable_draw_snowy_rocks"),
+	GRFPropertyMapDefinition(GrfSpecFeature::Aircraft, A0RPI_AIRCRAFT_IS_SEAPLANE, "aircraft_is_seaplane"),
+	GRFPropertyMapDefinition(GrfSpecFeature::Airports, A0RPI_AIRPORT_SEAPLANE_TERMINAL, "airport_seaplane_terminal"),
 	GRFPropertyMapDefinition(),
 };
 

@@ -11,6 +11,7 @@
 #include "../debug.h"
 #include "../newgrf_cargo.h"
 #include "../newgrf_engine.h"
+#include "../newgrf_extension.h"
 #include "../newgrf_sound.h"
 #include "newgrf_bytereader.h"
 #include "newgrf_internal_vehicle.h"
@@ -66,6 +67,11 @@ static ChangeInfoResult AircraftVehicleChangeInfo(uint first, uint last, int pro
 
 			case 0x0A: // Large
 				AssignBit(avi->subtype, 1, buf.ReadByte() != 0); // AIR_FAST
+				break;
+
+			case A0RPI_AIRCRAFT_IS_SEAPLANE:
+				if (MappedPropertyLengthMismatch(buf, 1, mapping_entry)) break;
+				AssignBit(avi->subtype, 2, buf.ReadByte() != 0); // AIR_SEAPLANE
 				break;
 
 			case PROP_AIRCRAFT_COST_FACTOR: // 0x0B Cost factor

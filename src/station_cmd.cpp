@@ -1347,6 +1347,9 @@ static CommandCost CheckFlatLandAirport(AirportTileTableIterator tile_iter, DoCo
 		if (station != nullptr && IsTileType(tile_cur, TileType::Station)) {
 			if (!IsAirport(tile_cur)) {
 				return ClearTile_Station(tile_cur, DoCommandFlag::Auto); // get error message
+			} else if (IsTileOnWater(tile_cur)) {
+				/* A seaplane terminal can't be converted into a land airport. */
+				return CommandCost(STR_ERROR_CAN_T_BUILD_ON_WATER);
 			} else {
 				StationID st = GetStationIndex(tile_cur);
 				if (*station == StationID::Invalid()) {
@@ -1363,6 +1366,79 @@ static CommandCost CheckFlatLandAirport(AirportTileTableIterator tile_iter, DoCo
 	}
 
 	return cost;
+}
+
+/** Water state of a tile of a seaplane terminal that is being built. */
+struct SeaplaneTerminalTile {
+	WaterClass water_class; ///< Water class of the tile, kept below the airport and restored on removal.
+	bool add_canal_infrastructure; ///< The canal was removed by clearing the tile and must be counted for the airport owner again.
+};
+
+/**
+ * Checks if a seaplane terminal can be built at the given location and clear the water.
+ * All tiles must be flat open water (sea, canal or river) at the same height, or tiles of
+ * the seaplane terminal of \a station that is being upgraded.
+ * @param tile_iter Airport tile iterator.
+ * @param flags Operation to perform.
+ * @param station StationID of airport allowed in search area.
+ * @param[out] water_tiles Water state of each tile, in iteration order.
+ * @return The cost in case of success, or an error code if it failed.
+ */
+static CommandCost CheckWaterAirport(AirportTileTableIterator tile_iter, DoCommandFlags flags, StationID *station, std::vector<SeaplaneTerminalTile> &water_tiles)
+{
+	CommandCost cost(ExpensesType::Construction);
+	int allowed_z = -1;
+
+	for (; tile_iter != INVALID_TILE; ++tile_iter) {
+		const TileIndex tile_cur = tile_iter;
+
+		if (IsTileType(tile_cur, TileType::Station)) {
+			if (!IsAirport(tile_cur)) return ClearTile_Station(tile_cur, DoCommandFlag::Auto); // get error message
+			if (!IsTileOnWater(tile_cur)) return CommandCost(STR_ERROR_SEAPLANE_TERMINAL_MUST_BE_ON_WATER);
+
+			CommandCost ret = CheckBuildableTile(tile_cur, {}, allowed_z, false, true);
+			if (ret.Failed()) return ret;
+
+			/* Upgrading an existing seaplane terminal. */
+			StationID st = GetStationIndex(tile_cur);
+			if (*station == StationID::Invalid()) {
+				*station = st;
+			} else if (*station != st) {
+				return CommandCost(STR_ERROR_ADJOINS_MORE_THAN_ONE_EXISTING);
+			}
+			water_tiles.push_back({GetWaterClass(tile_cur), false});
+			continue;
+		}
+
+		if (!IsWaterTile(tile_cur) || !IsTileFlat(tile_cur)) return CommandCost(STR_ERROR_SEAPLANE_TERMINAL_MUST_BE_ON_WATER);
+
+		CommandCost ret = CheckBuildableTile(tile_cur, {}, allowed_z, false, true);
+		if (ret.Failed()) return ret;
+		cost.AddCost(ret.GetCost());
+
+		/* Get the water class before the tile is cleared. The cost of clearing the water is not charged, as for docks. */
+		const WaterClass wc = GetWaterClass(tile_cur);
+		ret = Command<Commands::LandscapeClear>::Do(flags | DoCommandFlag::AllowRemoveWater, tile_cur);
+		if (ret.Failed()) return ret;
+
+		water_tiles.push_back({wc, wc == WaterClass::Canal});
+	}
+
+	return cost;
+}
+
+/**
+ * Clear an airport tile, restoring the water below a seaplane terminal.
+ * @param tile The airport tile.
+ * @param owner Owner of the airport, becomes the owner of a restored canal.
+ */
+static void ClearAirportTile(TileIndex tile, Owner owner)
+{
+	if (IsTileOnWater(tile)) {
+		MakeWaterKeepingClass(tile, owner);
+	} else {
+		DoClearSquare(tile);
+	}
 }
 
 /**
@@ -2839,7 +2915,9 @@ CommandCost CmdBuildAirport(DoCommandFlags flags, TileIndex tile, uint8_t airpor
 
 	StationID est = StationID::Invalid();
 	AirportTileTableIterator iter(as->layouts[layout].tiles, tile);
-	CommandCost cost = CheckFlatLandAirport(iter, flags, &est);
+	const bool seaplane_terminal = as->fsm->IsSeaplaneTerminal();
+	std::vector<SeaplaneTerminalTile> water_tiles;
+	CommandCost cost = seaplane_terminal ? CheckWaterAirport(iter, flags, &est, water_tiles) : CheckFlatLandAirport(iter, flags, &est);
 	if (cost.Failed()) return cost;
 
 	Station *st = nullptr;
@@ -2849,7 +2927,7 @@ CommandCost CmdBuildAirport(DoCommandFlags flags, TileIndex tile, uint8_t airpor
 	/* Distant join */
 	if (st == nullptr && distant_join) st = Station::GetIfValid(station_to_join);
 
-	ret = BuildStationPart(&st, flags, reuse, airport_area, GetAirport(airport_type)->flags.Test(AirportFTAClass::Flag::Airplanes) ? StationNaming::Airport : StationNaming::Heliport);
+	ret = BuildStationPart(&st, flags, reuse, airport_area, as->fsm->flags.Any({AirportFTAClass::Flag::Airplanes, AirportFTAClass::Flag::Seaplanes}) ? StationNaming::Airport : StationNaming::Heliport);
 	if (ret.Failed()) return ret;
 
 	/* action to be performed */
@@ -2944,7 +3022,7 @@ CommandCost CmdBuildAirport(DoCommandFlags flags, TileIndex tile, uint8_t airpor
 
 			for (TileIndex tile_cur : st->airport) {
 				DeleteAnimatedTile(tile_cur);
-				DoClearSquare(tile_cur);
+				ClearAirportTile(tile_cur, st->owner);
 				DeleteNewGRFInspectWindow(GrfSpecFeature::AirportTiles, tile_cur.base());
 			}
 
@@ -2963,8 +3041,15 @@ CommandCost CmdBuildAirport(DoCommandFlags flags, TileIndex tile, uint8_t airpor
 
 		st->rect.BeforeAddRect(tile, w, h, StationRect::ADD_TRY);
 
-		for (AirportTileTableIterator iter(as->layouts[layout].tiles, tile); iter != INVALID_TILE; ++iter) {
-			MakeAirport(iter, st->owner, st->index, iter.GetStationGfx(), WaterClass::Invalid);
+		size_t tile_index = 0;
+		for (AirportTileTableIterator iter(as->layouts[layout].tiles, tile); iter != INVALID_TILE; ++iter, ++tile_index) {
+			WaterClass wc = WaterClass::Invalid;
+			if (seaplane_terminal) {
+				const SeaplaneTerminalTile &water_tile = water_tiles[tile_index];
+				wc = water_tile.water_class;
+				if (water_tile.add_canal_infrastructure) Company::Get(st->owner)->infrastructure.water++;
+			}
+			MakeAirport(iter, st->owner, st->index, iter.GetStationGfx(), wc);
 			SetStationTileRandomBits(iter, GB(Random(), 0, 4));
 			st->airport.Add(iter);
 
@@ -3037,7 +3122,7 @@ static CommandCost RemoveAirport(TileIndex tile, DoCommandFlags flags)
 			if (!st->TileBelongsToAirport(tile_cur)) continue;
 
 			DeleteAnimatedTile(tile_cur);
-			DoClearSquare(tile_cur);
+			ClearAirportTile(tile_cur, st->owner);
 			DeleteNewGRFInspectWindow(GrfSpecFeature::AirportTiles, tile_cur.base());
 		}
 
@@ -3615,6 +3700,9 @@ static void DrawTile_Station(TileInfo *ti, DrawTileProcParams params)
 				DrawClearLandTile(ti, 3);
 			}
 		}
+	} else if (IsAirport(ti->tile) && IsTileOnWater(ti->tile)) {
+		/* Seaplane terminal: water replaces the land ground sprite, only the buildings are drawn. */
+		DrawWaterClassGround(ti);
 	} else if (IsRoadWaypointTile(ti->tile)) {
 		RoadBits bits = AxisToRoadBits(GetDriveThroughStopAxis(ti->tile));
 		extern void DrawRoadBits(TileInfo *ti, RoadBits road, RoadBits tram, Roadside roadside, bool snow_or_desert, bool draw_catenary);
@@ -5334,6 +5422,7 @@ static void ChangeTileOwner_Station(TileIndex tile, Owner old_owner, Owner new_o
 
 			case StationType::Buoy:
 			case StationType::Dock:
+			case StationType::Airport: // Seaplane terminals on canals
 				if (GetWaterClass(tile) == WaterClass::Canal) {
 					old_company->infrastructure.water--;
 					new_company->infrastructure.water++;

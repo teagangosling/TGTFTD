@@ -106,6 +106,7 @@ void AfterLoadCompanyStats()
 
 					case StationType::Dock:
 					case StationType::Buoy:
+					case StationType::Airport: // Seaplane terminals on canals
 						if (GetWaterClass(tile) == WaterClass::Canal) {
 							if (c != nullptr) c->infrastructure.water++;
 						}

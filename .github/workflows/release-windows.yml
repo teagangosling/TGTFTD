@@ -17,8 +17,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - arch: x86
-          host: x86
         - arch: x64
           host: x64
         - arch: arm64

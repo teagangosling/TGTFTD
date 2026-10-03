@@ -128,11 +128,13 @@ struct ShipVehicleInfo {
  * AircraftVehicleInfo subtypes, bitmask type.
  * If bit 0 is 0 then it is a helicopter, otherwise it is a plane
  * in which case bit 1 tells us whether it's a big(fast) plane or not.
+ * Bit 2 marks a plane as a seaplane, which may only use seaplane terminals.
  */
 enum AircraftSubTypeBits : uint8_t {
 	AIR_HELI = 0,
 	AIR_CTOL = 1, ///< Conventional Take Off and Landing, i.e. planes
-	AIR_FAST = 2
+	AIR_FAST = 2,
+	AIR_SEAPLANE = 4, ///< Seaplane, only valid together with AIR_CTOL
 };
 
 /** Information about a aircraft vehicle. */

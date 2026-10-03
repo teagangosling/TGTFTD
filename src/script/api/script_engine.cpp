@@ -273,7 +273,7 @@
 	if (!IsValidEngine(engine_id)) return ScriptAirport::PT_INVALID;
 	if (GetVehicleType(engine_id) != ScriptVehicle::VT_AIR) return ScriptAirport::PT_INVALID;
 
-	return (ScriptAirport::PlaneType)::AircraftVehInfo(engine_id)->subtype;
+	return (ScriptAirport::PlaneType)(::AircraftVehInfo(engine_id)->subtype & (AIR_CTOL | AIR_FAST)); // Seaplane bit is not exposed to scripts
 }
 
 /* static */ SQInteger ScriptEngine::GetMaximumOrderDistance(EngineID engine_id)

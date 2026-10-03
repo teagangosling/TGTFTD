@@ -34,6 +34,7 @@ template <>
 	AirportClass::Get(AirportClass::Allocate('LARG'))->name = STR_AIRPORT_CLASS_LARGE;
 	AirportClass::Get(AirportClass::Allocate('HUB_'))->name = STR_AIRPORT_CLASS_HUB;
 	AirportClass::Get(AirportClass::Allocate('HELI'))->name = STR_AIRPORT_CLASS_HELIPORTS;
+	AirportClass::Get(AirportClass::Allocate('SEAP'))->name = STR_AIRPORT_CLASS_SEAPLANE;
 }
 
 template <>
@@ -46,7 +47,8 @@ bool AirportClass::IsUIAvailable(uint) const
 template class NewGRFClass<AirportSpec, AirportClassID>;
 
 
-AirportOverrideManager _airport_mngr(NEW_AIRPORT_OFFSET, NUM_AIRPORTS, AT_INVALID);
+/* The top airport slots are reserved for the built-in seaplane terminals. */
+AirportOverrideManager _airport_mngr(NEW_AIRPORT_OFFSET, NUM_NEWGRF_AIRPORT_SLOTS, AT_INVALID);
 
 AirportSpec AirportSpec::specs[NUM_AIRPORTS]; ///< Airport specifications.
 
@@ -118,9 +120,11 @@ bool AirportSpec::IsWithinMapBounds(uint8_t table, TileIndex tile) const
 void AirportSpec::ResetAirports()
 {
 	extern const AirportSpec _origin_airport_specs[NEW_AIRPORT_OFFSET];
+	extern const AirportSpec _seaplane_airport_specs[NUM_AIRPORTS - NUM_NEWGRF_AIRPORT_SLOTS];
 
 	auto insert = std::copy(std::begin(_origin_airport_specs), std::end(_origin_airport_specs), std::begin(AirportSpec::specs));
 	std::fill(insert, std::end(AirportSpec::specs), AirportSpec{});
+	std::copy(std::begin(_seaplane_airport_specs), std::end(_seaplane_airport_specs), std::begin(AirportSpec::specs) + NUM_NEWGRF_AIRPORT_SLOTS);
 
 	_airport_mngr.ResetOverride();
 }
