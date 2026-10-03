@@ -71,7 +71,15 @@ void Load_NewGRFMapping(OverrideManagerBase &mapping)
 
 	int index;
 	while ((index = SlIterateArray()) != -1) {
-		if (unlikely((uint)index >= max_id)) SlErrorCorrupt("Too many NewGRF entity mappings");
+		if (unlikely((uint)index >= max_id)) {
+			/* Older savegames store every entry, including empty ones. Empty entries beyond the
+			 * end of the mapping (e.g. the airport slots reserved for the TGTFTD seaplane terminals)
+			 * are harmless and can be skipped. */
+			EntityIDMapping unused{};
+			SlObjectLoadFiltered(&unused, slt);
+			if (unused.grfid != 0 || unused.entity_id != 0) SlErrorCorrupt("Too many NewGRF entity mappings");
+			continue;
+		}
 		SlObjectLoadFiltered(&mapping.mappings[index], slt); // _newgrf_mapping_desc_old/_newgrf_mapping_desc_new has no conditionals
 	}
 }
