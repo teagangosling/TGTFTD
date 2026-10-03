@@ -1,6 +1,6 @@
 name: Release
 
-# TGTFTD release: builds Windows (x64, arm64) and macOS (universal) and publishes them as a GitHub Release.
+# TGTFTD release: builds Windows x64 and macOS Apple Silicon (arm64) and publishes them as a GitHub Release.
 # Run it from the Actions tab ("Run workflow"), with the branch or tag to build as "ref".
 
 on:
@@ -72,8 +72,8 @@ jobs:
         body: |
           TGTFTD build ${{ needs.source.outputs.version }}, based on JGR's Patch Pack.
 
-          * **Windows**: download the `windows-win64` (or `windows-arm64`) zip, extract it and run `openttd.exe`.
-          * **macOS**: download the `macos-universal` zip and extract it. The app is not signed by Apple: right-click it and choose **Open** the first time, or run `xattr -dr com.apple.quarantine /path/to/OpenTTD.app`.
+          * **Windows (x64)**: download the `windows-win64` zip, extract it and run `openttd.exe`.
+          * **macOS (Apple Silicon, M1 or newer)**: download the `macos` zip and extract it. The app is not signed by Apple: right-click it and choose **Open** the first time, or run `xattr -dr com.apple.quarantine /path/to/OpenTTD.app`.
 
           You still need base graphics (OpenGFX can be downloaded from the in-game "Check online content" menu, or copy the original TTD files).
 

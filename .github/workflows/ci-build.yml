@@ -19,29 +19,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# TGTFTD: trimmed to one build per desktop platform to keep CI minutes low.
+# TGTFTD: only Windows x64 and macOS Apple Silicon (arm64) are built.
 jobs:
-  linux:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - name: GCC - SDL2
-          compiler: gcc
-          cxxcompiler: g++
-          libraries: libsdl2-dev
-
-    name: Linux (${{ matrix.name }})
-
-    uses: ./.github/workflows/ci-linux.yml
-    secrets: inherit
-
-    with:
-      compiler: ${{ matrix.compiler }}
-      cxxcompiler: ${{ matrix.cxxcompiler }}
-      libraries: ${{ matrix.libraries }}
-      extra-cmake-parameters: ${{ matrix.extra-cmake-parameters }}
-
   macos:
     strategy:
       fail-fast: false
@@ -80,7 +59,6 @@ jobs:
   check_annotations:
     name: Check Annotations
     needs:
-    - linux
     - macos
     - windows
 

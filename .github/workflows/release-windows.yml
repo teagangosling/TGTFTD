@@ -19,8 +19,6 @@ jobs:
         include:
         - arch: x64
           host: x64
-        - arch: arm64
-          host: x64_arm64
 
     name: Windows (${{ matrix.arch }})
 
