@@ -1161,14 +1161,14 @@ static bool AircraftController(Aircraft *v)
 		/* NewGRF airports (like a rotated intercontinental from OpenGFX+Airports) can be non-rectangular
 		 * and their primary (north-most) tile does not have to be part of the airport.
 		 * As such, the height of the primary tile can be different from the rest of the airport.
-		 * Given we are landing/breaking, and as such are not a helicopter, we know that there has to be a hangar.
+		 * Given we are landing/breaking, and as such are not a helicopter, there is normally a hangar.
 		 * We also know that the airport itself has to be completely flat (otherwise it is not a valid airport).
-		 * Therefore, use the height of this hangar to calculate our z-value. */
+		 * Therefore, use the height of this hangar to calculate our z-value.
+		 * A seaplane dock has no hangar, but it is a small rectangle on water: use its primary tile. */
 		int airport_z = v->z_pos;
 		if (amd.flags.Any({AirportMovingDataFlag::Land, AirportMovingDataFlag::Brake}) && st != nullptr) {
-			assert(st->airport.HasHangar());
-			TileIndex hangar_tile = st->airport.GetHangarTile(0);
-			airport_z = GetTileMaxPixelZ(hangar_tile) + 1; // To avoid clashing with the shadow
+			TileIndex ref_tile = st->airport.HasHangar() ? st->airport.GetHangarTile(0) : st->airport.tile;
+			airport_z = GetTileMaxPixelZ(ref_tile) + 1; // To avoid clashing with the shadow
 		}
 
 		if (amd.flags.Test(AirportMovingDataFlag::Land)) {
@@ -1834,11 +1834,11 @@ static void AircraftEventHandler_EndLanding(Aircraft *v, const AirportFTAClass *
 	/* if going to terminal (OT_GOTO_STATION) choose one
 	 * 1. in case all terminals are busy AirportFindFreeTerminal() returns false or
 	 * 2. not going for terminal (but depot, no order),
-	 * --> get out of the way to the hangar. */
+	 * --> get out of the way to the hangar, or take off again if the airport has none (seaplane dock). */
 	if (v->current_order.IsType(OT_GOTO_STATION)) {
 		if (AirportFindFreeTerminal(v, apc)) return;
 	}
-	v->state = HANGAR;
+	v->state = Station::Get(v->targetairport)->airport.HasHangar() ? HANGAR : TAKEOFF;
 }
 
 /** Helicopter has landed. @copydoc AircraftStateHandler */

@@ -225,6 +225,7 @@ public:
 
 const AirportFTAClass *GetAirport(const uint8_t airport_type);
 const AirportFTAClass *GetSeaplaneAirportFTA(const AirportFTAClass *fta);
+const AirportFTAClass *GetSeaplaneDockFTA();
 uint8_t GetVehiclePosOnBuild(TileIndex hangar_tile);
 
 #endif /* AIRPORT_H */
