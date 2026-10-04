@@ -131,6 +131,21 @@ enum class AirportBlock : uint8_t {
 	OutWay3          = 31, ///< Third holding point just before take off.
 	/* end of new blocks */
 
+	/* TGTFTD seaplane terminals: each runway has a landing half and a departure half (see table/seaplane_movement.h). */
+	SeaRunway1Land   = 32, ///< Landing half of seaplane runway 1.
+	SeaRunway1Depart = 33, ///< Departure half of seaplane runway 1.
+	SeaRunway1Exit   = 34, ///< Way off the landing half of seaplane runway 1.
+	SeaRunway2Land   = 35, ///< Landing half of seaplane runway 2.
+	SeaRunway2Depart = 36, ///< Departure half of seaplane runway 2.
+	SeaRunway2Exit   = 37, ///< Way off the landing half of seaplane runway 2.
+	SeaHold1         = 38, ///< Seaplane holding point 1 before a departure half.
+	SeaHold2         = 39, ///< Seaplane holding point 2 before a departure half.
+	SeaHold3         = 40, ///< Seaplane holding point 3 before a departure half.
+	SeaTaxi1         = 41, ///< Seaplane taxiway 1.
+	SeaTaxi2         = 42, ///< Seaplane taxiway 2.
+	SeaTaxi3         = 43, ///< Seaplane taxiway 3.
+	SeaTaxi4         = 44, ///< Seaplane taxiway 4.
+
 	Nothing          = 30, ///< Nothing is blocked, for example being in the hanger.
 	Zeppeliner       = 62, ///< Block for the zeppeliner disaster vehicle.
 	AirportClosed    = 63, ///< Dummy block for indicating a closed airport.

@@ -403,27 +403,6 @@ static const AirportMovingData _airport_moving_data_oilrig[9] = {
 	{   69,    9, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn}, Direction::N }, // 8 - circle #4 (south)
 };
 
-/**
- * Seaplane dock (TGTFTD), 1x2: one berth beside a small floating dock, no hangar.
- * The footprint is x 0-15, y 0-31. Seaplanes land and take off on a water lane next to the dock (x = 24),
- * outside the footprint, heading north-west.
- */
-static const AirportMovingData _airport_moving_data_seaplane_dock[14] = {
-	{   10,   16, {AirportMovingDataFlag::ExactPosition},                                 Direction::NW}, // 00 Berth (terminal 1)
-	{   22,   22, {},                                                                     Direction::N }, // 01 Leave the berth
-	{   24,   44, {AirportMovingDataFlag::ExactPosition},                                 Direction::NW}, // 02 Start of the water lane (takeoff)
-	{   24,    0, {AirportMovingDataFlag::NoSpeedClamp},                                  Direction::N }, // 03 Accelerate along the water lane
-	{   24,  -82, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Takeoff},  Direction::N }, // 04 Take off
-	{   24,  177, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn}, Direction::N }, // 05 Fly to landing position in air
-	{   24,   48, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Land},     Direction::N }, // 06 Going down for land
-	{   24,    0, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Brake},    Direction::N }, // 07 Just landed, brake until end of the water lane
-	{   24,    4, {},                                                                     Direction::N }, // 08 Just landed, turn around
-	{   20,   10, {},                                                                     Direction::N }, // 09 Taxi to the berth
-	{  193,    1, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn}, Direction::N }, // 10 Fly around waiting for a landing spot (south-west)
-	{    1,    1, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn}, Direction::N }, // 11 Fly around waiting for a landing spot (north)
-	{    1,  257, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn}, Direction::N }, // 12 Fly around waiting for a landing spot (north-east)
-	{   47,  273, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn}, Direction::N }, // 13 Fly around waiting for a landing spot (south-east)
-};
 
 #undef AMD
 
@@ -851,30 +830,6 @@ static const AirportFTAbuildup _airport_fta_helistation[] = {
 	{ 30, TO_ALL, AirportBlock::Nothing, 31 },
 	{ 31, TO_ALL, AirportBlock::Nothing, 32 },
 	{ 32, TO_ALL, AirportBlock::Nothing, 25 },
-	{ MAX_ELEMENTS, TO_ALL, {}, 0 } // end marker. DO NOT REMOVE
-};
-
-/* TGTFTD seaplane dock: one berth, no hangar. Landing needs the berth to be free (Term1 on the LANDING choice). */
-static const uint8_t _airport_terminal_seaplane_dock[] = {1, 1};
-static const uint8_t _airport_entries_seaplane_dock[] = {12, 13, 10, 11};
-static const AirportFTAbuildup _airport_fta_seaplane_dock[] = {
-	{  0, TERM1, AirportBlock::Term1, 1 },
-	{  1, TO_ALL, AirportBlock::AirportBusy, 2 },
-	/* takeoff */
-	{  2, TAKEOFF, AirportBlock::AirportBusy, 3 },
-	{  3, STARTTAKEOFF, AirportBlock::Nothing, 4 },
-	{  4, ENDTAKEOFF, AirportBlock::Nothing, 0 },
-	/* landing */
-	{  5, FLYING, AirportBlock::Nothing, 10 }, { 5, LANDING, AirportBlock::Term1, 6 },
-	{  6, LANDING, AirportBlock::AirportBusy, 7 },
-	{  7, TO_ALL, AirportBlock::AirportBusy, 8 },
-	{  8, ENDLANDING, AirportBlock::AirportBusy, 9 }, { 8, TERM1, {}, 9 }, { 8, TAKEOFF, {}, 1 }, { 8, TO_ALL, {}, 1 },
-	{  9, TERMGROUP, AirportBlock::AirportBusy, 0 }, { 9, TERM1, AirportBlock::Term1, 0 }, { 9, TO_ALL, {}, 1 },
-	/* In air */
-	{ 10, TO_ALL, AirportBlock::Nothing, 11 },
-	{ 11, TO_ALL, AirportBlock::Nothing, 12 },
-	{ 12, TO_ALL, AirportBlock::Nothing, 13 },
-	{ 13, TO_ALL, AirportBlock::Nothing, 5 },
 	{ MAX_ELEMENTS, TO_ALL, {}, 0 } // end marker. DO NOT REMOVE
 };
 
