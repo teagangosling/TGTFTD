@@ -2,15 +2,15 @@
 """
 Publish a TGTFTD GitHub release from this machine, using the bundles built by the "Release" workflow.
 
-    python tools/publish_release.py [--run RUN_ID] [--wait]
+    python tools/publish_release.py [--run RUN_ID] [--wait] [--tag TAG]
 
 Releases are created locally, not by GitHub Actions: the Actions token may not create tags/releases here
 (403 "Resource not accessible by integration"). The Release workflow only builds the bundles.
 
 * --run: the Release workflow run to publish (default: the newest one).
 * --wait: wait for the Windows and macOS builds of that run to finish first.
-
-The tag is the version the run built (e.g. tgtftd-0.1.1), taken from the bundle file names. Each Actions artifact is a
+* --tag: the release tag; by default the version the run's Source job determined (e.g. tgtftd-0.1.1), read from its log.
+  (The bundle file names use the version data committed in the source, e.g. jgrpp-0.73.3, so they don't give the tag.) Each Actions artifact is a
 zip wrapping the real bundle files; they are unwrapped, so the release has the plain .zip/.dmg files (no zip in a zip).
 Re-running replaces assets with the same name. Authentication uses the GitHub credentials stored for git.
 """
@@ -84,6 +84,30 @@ def download_artifact(artifact_id) -> bytes:
         return r.read()
 
 
+def job_log(job_id) -> str:
+    opener = urllib.request.build_opener(_NoRedirect)
+    try:
+        opener.open(urllib.request.Request(f"{API}/actions/jobs/{job_id}/logs", headers=HEADERS))
+        raise RuntimeError("expected a redirect")
+    except urllib.error.HTTPError as e:
+        if e.code not in (301, 302, 303, 307, 308):
+            raise
+        location = e.headers["Location"]
+    with urllib.request.urlopen(location) as r:
+        return r.read().decode(errors="replace")
+
+
+def source_version(jobs) -> str | None:
+    """The version printed by the Source job ("Version: ..." in its metadata step)."""
+    for job in jobs:
+        if job["name"].startswith("Source"):
+            # The last "Version:" line is the metadata step's; earlier ones come from tool installers.
+            found = re.findall(r"^\S+ Version: (\S+)\s*$", job_log(job["id"]), re.M)
+            if found:
+                return found[-1]
+    return None
+
+
 def main():
     args = sys.argv[1:]
     run_id = args[args.index("--run") + 1] if "--run" in args else None
@@ -116,10 +140,9 @@ def main():
     if not files:
         sys.exit("no bundles found in the run's artifacts")
 
-    versions = {m.group(1) for name in files if (m := re.match(r"openttd-(.+?)-(windows|macos)", name))}
-    if len(versions) != 1:
-        sys.exit(f"could not determine a single version from {sorted(files)}")
-    version = versions.pop()
+    version = args[args.index("--tag") + 1] if "--tag" in args else source_version(jobs)
+    if not version:
+        sys.exit("could not read the version from the Source job log; pass --tag")
     sha = run["head_sha"]
     tag_ref = api("GET", f"/git/ref/tags/{version}")
     if tag_ref is not None:
