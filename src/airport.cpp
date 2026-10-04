@@ -79,6 +79,11 @@ SEAPLANE_AIRPORT(international, 2, false)
 SEAPLANE_AIRPORT(commuter, 2, true)
 SEAPLANE_AIRPORT(intercontinental, 2, false)
 
+/* Seaplane dock: a 1x2 dock with one berth and no hangar; it has no land counterpart. */
+static const AirportFTAClass _airportfta_seaplane_dock(_airport_moving_data_seaplane_dock, _airport_terminal_seaplane_dock,
+		0, _airport_entries_seaplane_dock, AirportFTAClass::Flags({AirportFTAClass::Flag::Seaplanes, AirportFTAClass::Flag::ShortStrip}),
+		_airport_fta_seaplane_dock, 0);
+
 #undef SEAPLANE_AIRPORT
 #undef HELIPORT
 #undef AIRPORT
@@ -227,6 +232,16 @@ const AirportFTAClass *GetSeaplaneAirportFTA(const AirportFTAClass *fta)
 	if (fta == &_airportfta_commuter) return &_airportfta_seaplane_commuter;
 	if (fta == &_airportfta_intercontinental) return &_airportfta_seaplane_intercontinental;
 	return nullptr;
+}
+
+/**
+ * Get the state machine of the seaplane dock: a 1x2 dock with one berth and no hangar,
+ * where seaplanes land and take off on the water next to the dock.
+ * @return The seaplane dock state machine.
+ */
+const AirportFTAClass *GetSeaplaneDockFTA()
+{
+	return &_airportfta_seaplane_dock;
 }
 
 /**

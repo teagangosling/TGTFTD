@@ -73,9 +73,9 @@ Built-in terminal graphics: the water is drawn under the whole airport, and only
 
 | What | Value |
 |---|---|
-| Feature test name | `tgtftd_seaplanes`, version `1` |
+| Feature test name | `tgtftd_seaplanes`, version `2` (version 1 has no seaplane dock) |
 | Aircraft property (mappable, feature `03`) | `aircraft_is_seaplane` — 1 byte: `0` normal plane, `1` seaplane |
-| Airport property (mappable, feature `0D`) | `airport_seaplane_terminal` — 1 byte: `0` land airport, `1` seaplane terminal |
+| Airport property (mappable, feature `0D`) | `airport_seaplane_terminal` — 1 byte: `0` land airport, `1` seaplane terminal, `2` seaplane dock (version 2) |
 | Airport class of seaplane terminals | label `SEAP`, name "Seaplane terminals" |
 | Water ground sprite for airport tiles | `4061` (`0x0FDD`, `SPR_FLAT_WATER_TILE`) |
 | Built-in airport IDs (game internal) | `126` Seaplane Dock, `127` Seaplane Harbour |
@@ -218,11 +218,12 @@ Aircraft movement is fixed by the substitute's state machine, so:
 
 | Property name | Feature | Size | Values |
 |---|---|---|---|
-| `airport_seaplane_terminal` | `0D` (airports) | 1 byte | `00` = land airport (default), `01` = seaplane terminal |
+| `airport_seaplane_terminal` | `0D` (airports) | 1 byte | `00` = land airport (default), `01` = seaplane terminal, `02` = seaplane dock (see [5.6](#56-seaplane-docks-1-2)) |
 
 * It must come **after property `08`**, in the same or a later Action 0, because it converts the state machine chosen by `08`.
 * Setting it to `01` also moves the airport into the *Seaplane terminals* class. Setting it back to `00` restores the substitute's land state machine and class.
 * With a heliport substitute the property is ignored, and a warning is logged at `grf` debug level 2.
+* `02` ignores the substitute's state machine and hangars and uses the seaplane dock described in [5.6](#56-seaplane-docks-1-2).
 
 ### 5.3 Drawing airport tiles on water
 
@@ -290,6 +291,42 @@ Notes:
 
 **NML does not support airports or airport tiles at all**, in standard NML or JGR's fork. Seaplane terminal GRFs, like all airport GRFs, must be written in NFO or a tool that produces NFO, such as [m4nfo](https://www.ttdpatch.de/m4nfo/), CETS or a custom script. The example generator [`make_seaplane_test_grf.py`](tgtftd/examples/make_seaplane_test_grf.py) shows how little is needed to build a GRF from Python.
 
+
+### 5.6 Seaplane docks (1 × 2)
+
+`airport_seaplane_terminal` = **`02`** (feature version 2) makes the airport a **seaplane dock**: a tiny terminal with **one berth and no hangar**, for a jetty or a small floating dock.
+
+* **Footprint: 1 × 2 tiles** (x = 1, y = 2 in the default rotation). Give property `0A` a layout of exactly these two tiles. Rotated layouts work as usual.
+* Property `08` still has to come first (any plane airport, e.g. `00`), but its state machine and hangars are replaced by the dock's. Set `airport_seaplane_terminal` = `02` **after** `08`.
+* It is listed in the *Seaplane terminals* class and has the same building rules as other seaplane terminals (flat open water only, no ships through it).
+* **No hangar**: seaplanes cannot be bought or serviced at a dock. A seaplane that needs servicing flies to the nearest seaplane terminal with a hangar.
+* It is a **short strip**: large seaplanes may crash, as at the *Seaplane Dock* built-in terminal.
+
+Positions, in world units (16 per tile) from the north corner, default rotation:
+
+| What | Position | Notes |
+|---|---|---|
+| Berth | (10, 16) | Aircraft faces north-west, beside a dock drawn along the north-east edge (x = 0–5) |
+| Water lane | x = 24, from y = 48 to y = 0 | **Outside the footprint**, in the water next to the dock. Seaplanes land heading north-west, turn round and taxi to the berth; they take off from (24, 44) heading north-west |
+
+* A seaplane only lands when the berth is free; otherwise it circles.
+* The water lane is not part of the station, so leave open water on the south-west side of the dock (towards +x) when you build it, the same way you would leave room for any landing aircraft.
+* Draw the dock on the north-east half of the footprint (low x) and open water on the rest: the berthed aircraft floats at x = 10, with its wings over the dock.
+
+An NFO Action 0 for a dock (local ID `02`, uses mapped property `F1`, name text `DC02`, layout of two of your tiles `00` and `01`):
+
+```
+-1 * -1  00 0D 05 01 02
+	08 00                                  // substitute: any plane airport (Country)
+	F1 01 02                               // airport_seaplane_terminal = 2: seaplane dock
+	0A 01 \d13  00  00 00 FE \w0000  00 01 FE \w0001  00 80
+	                                       // 1 layout, rotation north, tiles (0,0) and (0,1), terminator 00 80
+	0C \w1950 \wFFFF                       // available 1950 - forever
+	10 \wDC02                              // name
+```
+
+**Check the feature version** before using `02`: on version 1 the value is read as "seaplane terminal" and gives a broken airport. Test with `"B" "MINV" \w2 \w2` in the feature test and skip the dock when the bit is clear (see [section 3](#3-detecting-tgtftd-from-a-newgrf)).
+
 ---
 
 ## 6. Testing and debugging
@@ -311,4 +348,4 @@ Notes:
 * **Multiplayer**: all players must run the same TGTFTD build, as with any patch pack.
 * **NewGRF airport slots**: the two built-in seaplane terminals use the last two of the 128 airport slots, which leaves 116 slots for NewGRF airports (JGRPP has 118).
 * **Upstream JGRPP / OpenTTD**: neither mappable property exists there. With the skips shown above, your GRF still loads; seaplanes become normal planes and seaplane terminals are skipped.
-* Property names and numbers here are **version 1** of `tgtftd_seaplanes`. Any incompatible change will bump the feature version.
+* Property names and numbers here are **version 2** of `tgtftd_seaplanes`. Version 2 adds the seaplane dock (`airport_seaplane_terminal` = `02`); everything from version 1 is unchanged. Any incompatible change will bump the feature version.

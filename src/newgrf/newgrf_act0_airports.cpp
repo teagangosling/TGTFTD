@@ -169,11 +169,19 @@ static ChangeInfoResult AirportChangeInfo(uint first, uint last, int prop, const
 
 			case A0RPI_AIRPORT_SEAPLANE_TERMINAL: {
 				if (MappedPropertyLengthMismatch(buf, 1, mapping_entry)) break;
-				const bool seaplane = buf.ReadByte() != 0;
+				const uint8_t seaplane = buf.ReadByte();
 				const AirportSpec *orig = AirportSpec::GetWithoutOverride(static_cast<uint8_t>(as->grf_prop.subst_id));
-				if (!seaplane) {
+				as->depots = orig->depots;
+				if (seaplane == 0) {
 					as->fsm = orig->fsm;
 					as->class_index = orig->class_index;
+					break;
+				}
+				if (seaplane == 2) {
+					/* Seaplane dock: own 1x2 state machine with one berth and no hangar, whatever the substitute. */
+					as->fsm = GetSeaplaneDockFTA();
+					as->depots = {};
+					as->class_index = APC_SEAPLANE;
 					break;
 				}
 				const AirportFTAClass *fsm = GetSeaplaneAirportFTA(orig->fsm);
