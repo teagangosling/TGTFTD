@@ -79,6 +79,21 @@ class Airport:
 
 # ---------------------------------------------------------------------------------------------- airports
 
+
+def hangars_first(a: Airport, hangars: list) -> Airport:
+    """
+    Renumber the positions so the hangars come first, in hangar order: OpenTTD finds the position of hangar n as
+    position n of the state machine (GetVehiclePosOnBuild).
+    """
+    order = list(hangars) + [i for i in range(len(a.positions)) if i not in hangars]
+    new_index = {old: new for new, old in enumerate(order)}
+    a.positions = [a.positions[old] for old in order]
+    a.fta = sorted(((new_index[p], h, b, nxt if h == TERMGROUP else new_index[nxt]) for p, h, b, nxt in a.fta),
+                   key=lambda e: e[0])
+    a.entries = [new_index[e] for e in a.entries]
+    return a
+
+
 def country() -> Airport:
     """Country airfield (4x3): two berths, one hangar, one runway along y = 40 split at x = 32."""
     a = Airport("country", "Seaplane version of the country airfield", [1, 2], [14, 13, 16, 15])
@@ -580,8 +595,7 @@ def kerb_hangar() -> Airport:
     a.on(H2, "TO_ALL", NOTHING, H3)
     a.on(H3, "TO_ALL", NOTHING, H4)
     a.on(H4, "TO_ALL", NOTHING, F)
-    a.fta.sort(key=lambda e: e[0])
-    return a
+    return hangars_first(a, [H])
 
 
 def kerb_large() -> Airport:
@@ -663,8 +677,7 @@ def kerb_large() -> Airport:
     a.on(HW, "TO_ALL", NOTHING, FS)
     a.on(HSE, "TO_ALL", NOTHING, HE)
     a.on(HE, "TO_ALL", NOTHING, FN)
-    a.fta.sort(key=lambda e: e[0])
-    return a
+    return hangars_first(a, [HN, HS])
 
 
 AIRPORTS = [country, commuter, city, metropolitan, international, dock, kerb, kerb_hangar, kerb_large]
@@ -744,6 +757,14 @@ def validate(a: Airport):
             seen.append(p)
     assert seen == list(range(n)), f"{a.name}: positions without state machine entries: {set(range(n)) - set(seen)}"
     assert len(a.entries) == 4 and all(0 <= e < n for e in a.entries)
+    first = {}
+    for p, heading, blocks, nxt in a.fta:
+        first.setdefault(p, heading)
+    hangar_positions = sorted(p for p, h in first.items() if h == "HANGAR")
+    assert hangar_positions == list(range(len(hangar_positions))), \
+        f"{a.name}: hangars must be the first positions (hangar n = position n), got {hangar_positions}"
+    if a.depots:
+        assert len(hangar_positions) == len(a.depots), f"{a.name}: {len(a.depots)} hangar tiles but {hangar_positions}"
 
 # ---------------------------------------------------------------------------------------------- simulator
 
