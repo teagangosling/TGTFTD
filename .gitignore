@@ -8,3 +8,6 @@ docs/source/*
 /out
 /vcpkg_installed
 *.tmp
+
+# Python caches of the tools/ scripts
+__pycache__/

@@ -12,6 +12,7 @@
 
 #include "table/strings.h"
 #include "table/airport_movement.h"
+#include "table/seaplane_movement.h"
 #include "table/airporttile_ids.h"
 
 #include "safeguards.h"
@@ -59,30 +60,33 @@ HELIPORT(helistation, 3, 0)
 HELIPORT(oilrig, 1, 54)
 AIRPORT_GENERIC(dummy, nullptr, 0, AirportFTAClass::Flags({AirportFTAClass::Flag::Airplanes, AirportFTAClass::Flag::Helicopters}), 0)
 
+
+
 /**
- * Define the seaplane terminal variant of an airport.
- * It shares the movement data and state machine of the land airport, but only seaplanes may use it.
+ * Define the seaplane terminal variant of an airport with its own state machine (table/seaplane_movement.h):
+ * the same berths and hangars as the land airport, with every runway split into a landing half and a departure
+ * half, so a seaplane can land while another one takes off.
  * @param name Suffix of the names of the airport data.
- * @param num_helipads Number of heli pads (unused by seaplanes, kept so the state machine is unchanged).
  * @param short_strip Airport has a short land/take-off strip.
  */
-#define SEAPLANE_AIRPORT(name, num_helipads, short_strip) \
-	static const AirportFTAClass _airportfta_seaplane_ ## name(_airport_moving_data_ ## name, _airport_terminal_ ## name, \
-			num_helipads, _airport_entries_ ## name, \
-			AirportFTAClass::Flags{AirportFTAClass::Flag::Seaplanes} | (short_strip ? AirportFTAClass::Flags{AirportFTAClass::Flag::ShortStrip} : AirportFTAClass::Flags{}), \
-			_airport_fta_ ## name, 0);
+#define SEAPLANE_AIRPORT(name, short_strip) 	static const AirportFTAClass _airportfta_seaplane_ ## name(_airport_moving_data_seaplane_ ## name, _airport_terminal_seaplane_ ## name, 			0, _airport_entries_seaplane_ ## name, 			AirportFTAClass::Flags{AirportFTAClass::Flag::Seaplanes} | (short_strip ? AirportFTAClass::Flags{AirportFTAClass::Flag::ShortStrip} : AirportFTAClass::Flags{}), 			_airport_fta_seaplane_ ## name, 0);
 
-SEAPLANE_AIRPORT(country, 0, true)
-SEAPLANE_AIRPORT(city, 0, false)
-SEAPLANE_AIRPORT(metropolitan, 0, false)
-SEAPLANE_AIRPORT(international, 2, false)
-SEAPLANE_AIRPORT(commuter, 2, true)
-SEAPLANE_AIRPORT(intercontinental, 2, false)
-
+SEAPLANE_AIRPORT(country, true)
+SEAPLANE_AIRPORT(city, false)
+SEAPLANE_AIRPORT(metropolitan, false)
+SEAPLANE_AIRPORT(international, false)
+SEAPLANE_AIRPORT(commuter, true)
 /* Seaplane dock: a 1x2 dock with one berth and no hangar; it has no land counterpart. */
-static const AirportFTAClass _airportfta_seaplane_dock(_airport_moving_data_seaplane_dock, _airport_terminal_seaplane_dock,
-		0, _airport_entries_seaplane_dock, AirportFTAClass::Flags({AirportFTAClass::Flag::Seaplanes, AirportFTAClass::Flag::ShortStrip}),
-		_airport_fta_seaplane_dock, 0);
+SEAPLANE_AIRPORT(dock, true)
+/* Seaplane kerb dock: 6x3, eight slots along a long dock, a one-way lane and a split runway; no hangar. */
+SEAPLANE_AIRPORT(kerb, true)
+/* Seaplane kerb terminal with a hangar (5x4) and large kerb terminal with two circuits (7x7). */
+SEAPLANE_AIRPORT(kerb_hangar, true)
+SEAPLANE_AIRPORT(kerb_large, false)
+
+/* The intercontinental airport already has four runways: its seaplane version uses the land state machine. */
+static const AirportFTAClass _airportfta_seaplane_intercontinental(_airport_moving_data_intercontinental, _airport_terminal_intercontinental,
+		2, _airport_entries_intercontinental, AirportFTAClass::Flags{AirportFTAClass::Flag::Seaplanes}, _airport_fta_intercontinental, 0);
 
 #undef SEAPLANE_AIRPORT
 #undef HELIPORT
@@ -242,6 +246,32 @@ const AirportFTAClass *GetSeaplaneAirportFTA(const AirportFTAClass *fta)
 const AirportFTAClass *GetSeaplaneDockFTA()
 {
 	return &_airportfta_seaplane_dock;
+}
+
+/**
+ * Get the state machine of the seaplane kerb dock: a 6x3 terminal with eight slots nose-to-tail along a long dock,
+ * where seaplanes pull in at the first free slot and leave forward, with a split runway and no hangar.
+ * @return The seaplane kerb dock state machine.
+ */
+const AirportFTAClass *GetSeaplaneKerbDockFTA()
+{
+	return &_airportfta_seaplane_kerb;
+}
+
+/**
+ * Get a seaplane kerb terminal state machine and its hangars.
+ * @param variant 3 = kerb dock (6x3, no hangar), 4 = kerb terminal with hangar (5x4), 5 = large kerb terminal (7x7, two hangars).
+ * @param[out] depots The hangars of the terminal.
+ * @return The state machine, or \c nullptr for an unknown variant.
+ */
+const AirportFTAClass *GetSeaplaneKerbFTA(uint8_t variant, std::span<const HangarTileTable> &depots)
+{
+	switch (variant) {
+		case 3: depots = {}; return &_airportfta_seaplane_kerb;
+		case 4: depots = _airport_depots_seaplane_kerb_hangar; return &_airportfta_seaplane_kerb_hangar;
+		case 5: depots = _airport_depots_seaplane_kerb_large; return &_airportfta_seaplane_kerb_large;
+		default: return nullptr;
+	}
 }
 
 /**
