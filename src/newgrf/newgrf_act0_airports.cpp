@@ -177,10 +177,16 @@ static ChangeInfoResult AirportChangeInfo(uint first, uint last, int prop, const
 					as->class_index = orig->class_index;
 					break;
 				}
-				if (seaplane == 2 || seaplane == 3) {
-					/* Seaplane dock (1x2, one berth) or kerb dock (6x3, eight slots): own state machine and no hangar, whatever the substitute. */
-					as->fsm = seaplane == 2 ? GetSeaplaneDockFTA() : GetSeaplaneKerbDockFTA();
+				if (seaplane == 2) {
+					/* Seaplane dock (1x2, one berth): own state machine and no hangar, whatever the substitute. */
+					as->fsm = GetSeaplaneDockFTA();
 					as->depots = {};
+					as->class_index = APC_SEAPLANE;
+					break;
+				}
+				if (seaplane >= 3 && seaplane <= 5) {
+					/* Seaplane kerb terminals: own state machine and hangars, whatever the substitute. */
+					as->fsm = GetSeaplaneKerbFTA(seaplane, as->depots);
 					as->class_index = APC_SEAPLANE;
 					break;
 				}

@@ -44,6 +44,7 @@ NEW_BLOCKS = {
     "SeaHold1": 38, "SeaHold2": 39, "SeaHold3": 40,
     "SeaTaxi1": 41, "SeaTaxi2": 42, "SeaTaxi3": 43, "SeaTaxi4": 44,
     "SeaTaxi5": 45, "SeaTaxi6": 46, "SeaTaxi7": 47, "SeaTaxi8": 48,
+    "SeaTaxi9": 49, "SeaTaxi10": 50, "SeaHold4": 51,
 }
 NOTHING = "Nothing"
 
@@ -64,6 +65,7 @@ class Airport:
     positions: list = field(default_factory=list)  # (x, y, flags, direction, comment)
     fta: list = field(default_factory=list)        # (position, heading, blocks, next)
     has_hangar: bool = True
+    depots: list = field(default_factory=list)     # own hangar table: ((tile x, tile y), exit direction)
 
     def pos(self, x, y, flags=(), direction="N", comment=""):
         self.positions.append((x, y, tuple(flags), direction, comment))
@@ -513,7 +515,159 @@ def kerb() -> Airport:
     return a
 
 
-AIRPORTS = [country, commuter, city, metropolitan, international, dock, kerb]
+def _kerb_slots(a: Airport, xs, slot_y, lane_y, facing, lane_dx, first_term, lane_blocks, end_pos):
+    """Slots nose-to-tail along a dock and the one-way lane beside them. Returns (slot positions, lane positions)."""
+    slots = [a.pos(x, slot_y, EXACT, facing, f"Slot {first_term + i + 1} alongside the dock") for i, x in enumerate(xs)]
+    lanes = [a.pos(x + lane_dx, lane_y, (), "N", f"Lane beside slot {first_term + i + 1}") for i, x in enumerate(xs)]
+    return slots, lanes
+
+
+def _kerb_slot_fta(a: Airport, slots, lanes, first_term, lane_blocks, end_pos, extra=None):
+    for i, sp in enumerate(slots):
+        term = TERMINALS[first_term + i]
+        ahead = lanes[i + 1] if i + 1 < len(lanes) else end_pos
+        a.on(sp, term, TERM_BLOCK[term], ahead)                           # pull out forward onto the lane
+    for i, lp in enumerate(lanes):
+        term = TERMINALS[first_term + i]
+        ahead = lanes[i + 1] if i + 1 < len(lanes) else end_pos
+        a.on(lp, TERMGROUP, lane_blocks[i], 0); a.on(lp, term, TERM_BLOCK[term], slots[i]); a.on(lp, "TO_ALL", (), ahead)
+
+
+def kerb_hangar() -> Airport:
+    """
+    Seaplane kerb terminal with a hangar (5x4), e.g. Victoria: a terminal building and the hangar on the north-west
+    row, a long dock in front of them with five slots nose-to-tail, a one-way lane and a split runway (y = 56).
+    The hangar (tile 0,0) is at the exit end of the lane: seaplanes for service go straight in from there; seaplanes
+    leaving it join the lane through a return path south of the lane, or line up directly for departure.
+    """
+    a = Airport("kerb_hangar", "Seaplane kerb terminal with hangar", [1, 5], [0, 0, 0, 0], depots=[((0, 0), "SE")])
+    xs = [70, 59, 48, 37, 26]
+    slots, lanes = _kerb_slots(a, xs, 29, 41, "NE", 6, 0, None, None)   # 0-4 slots, 5-9 lanes
+    W = a.pos(14, 41, (), "N", "North-east end of the lane")          # 10
+    H = a.pos(7, 3, EXACT, "SE", "In hangar")                         # 11
+    HX = a.pos(8, 24, (), "N", "Outside the hangar")                  # 12
+    R = a.pos(6, 56, (), "N", "Enter the departure half")             # 13
+    LU = a.pos(38, 56, EXACT, "NE", "Line up: start of the departure half")  # 14
+    END = a.pos(2, 56, ROLL, "N", "End of the departure run")         # 15
+    LF = a.pos(-50, 56, LIFT, "N", "Take off")                        # 16
+    F = a.pos(130, 56, AIR, "N", "Final approach fix")                # 17
+    TD = a.pos(76, 56, LAND, "N", "Touch down at the start of the landing half")  # 18
+    BR = a.pos(44, 56, BRAKE, "N", "Stop, holding short of the departure half")  # 19
+    X = a.pos(66, 48, (), "N", "Leave the landing half for the lane")  # 20
+    RL1 = a.pos(4, 47, (), "N", "Return path from the hangar")         # 21
+    RL2 = a.pos(58, 48, (), "N", "Return path to the lane")            # 22
+    H1 = a.pos(10, 130, AIR, "N", "Holding (north-east)")             # 23
+    H2 = a.pos(10, -20, AIR, "N", "Holding (north-west)")             # 24
+    H3 = a.pos(150, -20, AIR, "N", "Holding (south-west)")            # 25
+    H4 = a.pos(170, 40, AIR, "N", "Holding (south)")                  # 26
+    a.entries = [H2, H1, H4, H3]
+
+    _kerb_slot_fta(a, slots, lanes, 0, ["SeaTaxi%d" % (i + 1) for i in range(5)], W)
+    a.on(W, TERMGROUP, "SeaHold1", 0); a.on(W, "HANGAR", (), H); a.on(W, "TO_ALL", (), R)
+    a.on(H, "HANGAR", NOTHING, HX)
+    a.on(HX, TERMGROUP, "Hangar1Area", 0); a.on(HX, "TAKEOFF", (), R); a.on(HX, "HANGAR", (), H); a.on(HX, "TO_ALL", (), RL1)
+    a.on(R, "TO_ALL", "SeaRunway1Depart", LU)
+    a.on(LU, "TAKEOFF", "SeaRunway1Depart", END)
+    a.on(END, "STARTTAKEOFF", "SeaRunway1Depart", LF)
+    a.on(LF, "ENDTAKEOFF", NOTHING, 0)
+    a.on(F, "FLYING", NOTHING, H1); a.on(F, "LANDING", "SeaRunway1Exit", TD)
+    a.on(TD, "LANDING", "SeaRunway1Land", BR)
+    a.on(BR, "TO_ALL", "SeaRunway1Land", X)
+    a.on(X, "ENDLANDING", "SeaRunway1Exit", lanes[0]); a.on(X, "TO_ALL", (), lanes[0])
+    a.on(RL1, "TO_ALL", "SeaTaxi6", RL2)
+    a.on(RL2, "TO_ALL", "SeaTaxi6", X)
+    a.on(H1, "TO_ALL", NOTHING, H2)
+    a.on(H2, "TO_ALL", NOTHING, H3)
+    a.on(H3, "TO_ALL", NOTHING, H4)
+    a.on(H4, "TO_ALL", NOTHING, F)
+    a.fta.sort(key=lambda e: e[0])
+    return a
+
+
+def kerb_large() -> Airport:
+    """
+    Large seaplane kerb terminal (7x7), e.g. Vancouver: a central pier (y = 50-62) with the terminal, slots along both
+    faces of it, and two independent circuits, each with its own one-way lane, split runway and hangar:
+      north: runway y = 8 landed towards the north-east, lane y = 32 towards x = 0, slots 1-4 at y = 44, hangar (6,1);
+      south: runway y = 104 landed towards the south-west, lane y = 80 towards x = 112, slots 5-8 at y = 68, hangar (6,5).
+    The holding pattern passes both final approach fixes.
+    """
+    a = Airport("kerb_large", "Large seaplane kerb terminal", [2, 4, 4], [0, 0, 0, 0],
+                depots=[((6, 1), "SE"), ((6, 5), "SE")])
+    sn, ln = _kerb_slots(a, [92, 74, 56, 38], 44, 32, "NE", 8, 0, None, None)     # 0-3, 4-7
+    ss, ls = _kerb_slots(a, [20, 38, 56, 74], 68, 80, "SW", -8, 4, None, None)    # 8-11, 12-15
+    WN = a.pos(24, 32, (), "N", "North lane: north-east end")                    # 16
+    RN = a.pos(8, 8, (), "N", "Enter the departure half of the north runway")   # 17
+    LUN = a.pos(56, 8, EXACT, "NE", "Line up on the north runway")              # 18
+    ENDN = a.pos(2, 8, ROLL, "N", "End of the departure run, north runway")     # 19
+    LIFTN = a.pos(-50, 8, LIFT, "N", "Take off from the north runway")          # 20
+    FN = a.pos(170, 8, AIR, "N", "Final approach fix, north runway")            # 21
+    TDN = a.pos(106, 8, LAND, "N", "Touch down on the north runway")            # 22
+    BRN = a.pos(64, 8, BRAKE, "N", "Stop on the north runway, holding short")    # 23
+    XN = a.pos(84, 20, (), "N", "Leave the north runway for the north lane")    # 24
+    HN = a.pos(103, 19, EXACT, "SE", "In the north hangar")                     # 25
+    HXN = a.pos(106, 38, (), "N", "Outside the north hangar")                   # 26
+    RN1 = a.pos(20, 22, (), "N", "Path to the north hangar")                    # 27
+    RN2 = a.pos(92, 24, (), "N", "Path to the north hangar")                    # 28
+    ES = a.pos(90, 80, (), "N", "South lane: south-west end")                   # 29
+    RS = a.pos(106, 104, (), "N", "Enter the departure half of the south runway")  # 30
+    LUS = a.pos(56, 104, EXACT, "SW", "Line up on the south runway")            # 31
+    ENDS = a.pos(110, 104, ROLL, "N", "End of the departure run, south runway")  # 32
+    LIFTS = a.pos(170, 104, LIFT, "N", "Take off from the south runway")        # 33
+    FS = a.pos(-60, 104, AIR, "N", "Final approach fix, south runway")          # 34
+    TDS = a.pos(6, 104, LAND, "N", "Touch down on the south runway")            # 35
+    BRS = a.pos(48, 104, BRAKE, "N", "Stop on the south runway, holding short")  # 36
+    XS = a.pos(28, 92, (), "N", "Leave the south runway for the south lane")    # 37
+    HS = a.pos(103, 83, EXACT, "SE", "In the south hangar")                     # 38
+    HXS = a.pos(104, 96, (), "N", "Outside the south hangar")                   # 39
+    RS1 = a.pos(90, 92, (), "N", "Return path from the south hangar")           # 40
+    RS2 = a.pos(8, 90, (), "N", "Return path to the south lane")                # 41
+    HNW = a.pos(60, -60, AIR, "N", "Holding (north-west)")                      # 42
+    HW = a.pos(-60, 40, AIR, "N", "Holding (north-east)")                       # 43
+    HSE = a.pos(60, 170, AIR, "N", "Holding (south-east)")                      # 44
+    HE = a.pos(170, 70, AIR, "N", "Holding (south-west)")                       # 45
+    a.entries = [HW, HSE, HE, HNW]
+
+    # North circuit (terminal group 0).
+    _kerb_slot_fta(a, sn, ln, 0, ["SeaTaxi1", "SeaTaxi2", "SeaTaxi3", "SeaTaxi4"], WN)
+    a.on(WN, TERMGROUP, "SeaHold2", 0); a.on(WN, "HANGAR", (), RN1); a.on(WN, "TO_ALL", (), RN)
+    a.on(RN, "TO_ALL", "SeaRunway2Depart", LUN)
+    a.on(LUN, "TAKEOFF", "SeaRunway2Depart", ENDN)
+    a.on(ENDN, "STARTTAKEOFF", "SeaRunway2Depart", LIFTN)
+    a.on(LIFTN, "ENDTAKEOFF", NOTHING, 0)
+    a.on(FN, "FLYING", NOTHING, HNW); a.on(FN, "LANDING", "SeaRunway2Exit", TDN)
+    a.on(TDN, "LANDING", "SeaRunway2Land", BRN)
+    a.on(BRN, "TO_ALL", "SeaRunway2Land", XN)
+    a.on(XN, "ENDLANDING", "SeaRunway2Exit", ln[0]); a.on(XN, TERMGROUP, NOTHING, 0); a.on(XN, "TO_ALL", (), ln[0])
+    a.on(HN, "HANGAR", NOTHING, HXN); a.on(HN, TERMGROUP, NOTHING, 0); a.on(HN, "TO_ALL", (), HXN)
+    a.on(HXN, TERMGROUP, "Hangar1Area", 0); a.on(HXN, "HANGAR", (), HN); a.on(HXN, "TO_ALL", (), ln[0])
+    a.on(RN1, "TO_ALL", "SeaTaxi9", RN2)
+    a.on(RN2, "TO_ALL", "SeaTaxi9", HN)
+    # South circuit (terminal group 1).
+    _kerb_slot_fta(a, ss, ls, 4, ["SeaTaxi5", "SeaTaxi6", "SeaTaxi7", "SeaTaxi8"], ES)
+    a.on(ES, TERMGROUP, "SeaHold1", 0); a.on(ES, "HANGAR", (), HS); a.on(ES, "TO_ALL", (), RS)
+    a.on(RS, "TO_ALL", "SeaRunway1Depart", LUS)
+    a.on(LUS, "TAKEOFF", "SeaRunway1Depart", ENDS)
+    a.on(ENDS, "STARTTAKEOFF", "SeaRunway1Depart", LIFTS)
+    a.on(LIFTS, "ENDTAKEOFF", NOTHING, 0)
+    a.on(FS, "FLYING", NOTHING, HSE); a.on(FS, "LANDING", "SeaRunway1Exit", TDS)
+    a.on(TDS, "LANDING", "SeaRunway1Land", BRS)
+    a.on(BRS, "TO_ALL", "SeaRunway1Land", XS)
+    a.on(XS, "ENDLANDING", "SeaRunway1Exit", ls[0]); a.on(XS, TERMGROUP, NOTHING, 1); a.on(XS, "TO_ALL", (), ls[0])
+    a.on(HS, "HANGAR", NOTHING, HXS); a.on(HS, TERMGROUP, NOTHING, 1); a.on(HS, "TO_ALL", (), HXS)
+    a.on(HXS, TERMGROUP, "Hangar2Area", 0); a.on(HXS, "TAKEOFF", (), RS); a.on(HXS, "HANGAR", (), HS); a.on(HXS, "TO_ALL", (), RS1)
+    a.on(RS1, "TO_ALL", "SeaTaxi10", RS2)
+    a.on(RS2, "TO_ALL", "SeaTaxi10", ls[0])
+    # Holding pattern through both final approach fixes.
+    a.on(HNW, "TO_ALL", NOTHING, HW)
+    a.on(HW, "TO_ALL", NOTHING, FS)
+    a.on(HSE, "TO_ALL", NOTHING, HE)
+    a.on(HE, "TO_ALL", NOTHING, FN)
+    a.fta.sort(key=lambda e: e[0])
+    return a
+
+
+AIRPORTS = [country, commuter, city, metropolitan, international, dock, kerb, kerb_hangar, kerb_large]
 
 # ---------------------------------------------------------------------------------------------- C++ output
 
@@ -554,6 +708,9 @@ def generate() -> str:
             fl = "{" + ", ".join("AirportMovingDataFlag::" + f for f in flags) + "}"
             out.append(f"\t{{ {x:4d}, {y:4d}, {fl + ',':<75} Direction::{direction:<2} }}, // {i:02d} {comment}")
         out.append("};")
+        if a.depots:
+            hangars = ", ".join(f"{{{{{x}, {y}}}, Direction::{d}, {i}}}" for i, ((x, y), d) in enumerate(a.depots))
+            out.append(f"static const HangarTileTable _airport_depots_seaplane_{a.name}[] = {{ {hangars} }};")
         out.append(f"static const uint8_t _airport_terminal_seaplane_{a.name}[] = {{ {', '.join(map(str, a.terminals))} }};")
         out.append(f"static const uint8_t _airport_entries_seaplane_{a.name}[] = {{ {', '.join(map(str, a.entries))} }};")
         out.append(f"static const AirportFTAbuildup _airport_fta_seaplane_{a.name}[] = {{")
@@ -827,7 +984,7 @@ def check():
     for make in AIRPORTS:
         a = make()
         validate(a)
-        planes = {"dock": 3, "kerb": 12}.get(a.name, sum(a.terminals[1:]) * 2 + 2)
+        planes = {"dock": 3, "kerb": 12, "kerb_hangar": 8, "kerb_large": 12}.get(a.name, sum(a.terminals[1:]) * 2 + 2)
         results = []
         for seed in range(8):
             try:

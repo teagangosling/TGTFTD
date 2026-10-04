@@ -431,4 +431,170 @@ static const AirportFTAbuildup _airport_fta_seaplane_kerb[] = {
 	{ MAX_ELEMENTS, TO_ALL, {}, 0 } // end marker. DO NOT REMOVE
 };
 
+/** Seaplane kerb terminal with hangar. */
+static const AirportMovingData _airport_moving_data_seaplane_kerb_hangar[27] = {
+	{   70,   29, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 00 Slot 1 alongside the dock
+	{   59,   29, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 01 Slot 2 alongside the dock
+	{   48,   29, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 02 Slot 3 alongside the dock
+	{   37,   29, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 03 Slot 4 alongside the dock
+	{   26,   29, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 04 Slot 5 alongside the dock
+	{   76,   41, {},                                                                         Direction::N  }, // 05 Lane beside slot 1
+	{   65,   41, {},                                                                         Direction::N  }, // 06 Lane beside slot 2
+	{   54,   41, {},                                                                         Direction::N  }, // 07 Lane beside slot 3
+	{   43,   41, {},                                                                         Direction::N  }, // 08 Lane beside slot 4
+	{   32,   41, {},                                                                         Direction::N  }, // 09 Lane beside slot 5
+	{   14,   41, {},                                                                         Direction::N  }, // 10 North-east end of the lane
+	{    7,    3, {AirportMovingDataFlag::ExactPosition},                                     Direction::SE }, // 11 In hangar
+	{    8,   24, {},                                                                         Direction::N  }, // 12 Outside the hangar
+	{    6,   56, {},                                                                         Direction::N  }, // 13 Enter the departure half
+	{   38,   56, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 14 Line up: start of the departure half
+	{    2,   56, {AirportMovingDataFlag::NoSpeedClamp},                                      Direction::N  }, // 15 End of the departure run
+	{  -50,   56, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Takeoff},      Direction::N  }, // 16 Take off
+	{  130,   56, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 17 Final approach fix
+	{   76,   56, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Land},         Direction::N  }, // 18 Touch down at the start of the landing half
+	{   44,   56, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Brake},        Direction::N  }, // 19 Stop, holding short of the departure half
+	{   66,   48, {},                                                                         Direction::N  }, // 20 Leave the landing half for the lane
+	{    4,   47, {},                                                                         Direction::N  }, // 21 Return path from the hangar
+	{   58,   48, {},                                                                         Direction::N  }, // 22 Return path to the lane
+	{   10,  130, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 23 Holding (north-east)
+	{   10,  -20, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 24 Holding (north-west)
+	{  150,  -20, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 25 Holding (south-west)
+	{  170,   40, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 26 Holding (south)
+};
+static const HangarTileTable _airport_depots_seaplane_kerb_hangar[] = { {{0, 0}, Direction::SE, 0} };
+static const uint8_t _airport_terminal_seaplane_kerb_hangar[] = { 1, 5 };
+static const uint8_t _airport_entries_seaplane_kerb_hangar[] = { 24, 23, 26, 25 };
+static const AirportFTAbuildup _airport_fta_seaplane_kerb_hangar[] = {
+	{  0, TERM1, AirportBlock::Term1, 6 },
+	{  1, TERM2, AirportBlock::Term2, 7 },
+	{  2, TERM3, AirportBlock::Term3, 8 },
+	{  3, TERM4, AirportBlock::Term4, 9 },
+	{  4, TERM5, AirportBlock::Term5, 10 },
+	{  5, TERMGROUP, AirportBlock::SeaTaxi1, 0 }, {  5, TERM1, AirportBlock::Term1, 0 }, {  5, TO_ALL, {}, 6 },
+	{  6, TERMGROUP, AirportBlock::SeaTaxi2, 0 }, {  6, TERM2, AirportBlock::Term2, 1 }, {  6, TO_ALL, {}, 7 },
+	{  7, TERMGROUP, AirportBlock::SeaTaxi3, 0 }, {  7, TERM3, AirportBlock::Term3, 2 }, {  7, TO_ALL, {}, 8 },
+	{  8, TERMGROUP, AirportBlock::SeaTaxi4, 0 }, {  8, TERM4, AirportBlock::Term4, 3 }, {  8, TO_ALL, {}, 9 },
+	{  9, TERMGROUP, AirportBlock::SeaTaxi5, 0 }, {  9, TERM5, AirportBlock::Term5, 4 }, {  9, TO_ALL, {}, 10 },
+	{ 10, TERMGROUP, AirportBlock::SeaHold1, 0 }, { 10, HANGAR, {}, 11 }, { 10, TO_ALL, {}, 13 },
+	{ 11, HANGAR, AirportBlock::Nothing, 12 },
+	{ 12, TERMGROUP, AirportBlock::Hangar1Area, 0 }, { 12, TAKEOFF, {}, 13 }, { 12, HANGAR, {}, 11 }, { 12, TO_ALL, {}, 21 },
+	{ 13, TO_ALL, AirportBlock::SeaRunway1Depart, 14 },
+	{ 14, TAKEOFF, AirportBlock::SeaRunway1Depart, 15 },
+	{ 15, STARTTAKEOFF, AirportBlock::SeaRunway1Depart, 16 },
+	{ 16, ENDTAKEOFF, AirportBlock::Nothing, 0 },
+	{ 17, FLYING, AirportBlock::Nothing, 23 }, { 17, LANDING, AirportBlock::SeaRunway1Exit, 18 },
+	{ 18, LANDING, AirportBlock::SeaRunway1Land, 19 },
+	{ 19, TO_ALL, AirportBlock::SeaRunway1Land, 20 },
+	{ 20, ENDLANDING, AirportBlock::SeaRunway1Exit, 5 }, { 20, TO_ALL, {}, 5 },
+	{ 21, TO_ALL, AirportBlock::SeaTaxi6, 22 },
+	{ 22, TO_ALL, AirportBlock::SeaTaxi6, 20 },
+	{ 23, TO_ALL, AirportBlock::Nothing, 24 },
+	{ 24, TO_ALL, AirportBlock::Nothing, 25 },
+	{ 25, TO_ALL, AirportBlock::Nothing, 26 },
+	{ 26, TO_ALL, AirportBlock::Nothing, 17 },
+	{ MAX_ELEMENTS, TO_ALL, {}, 0 } // end marker. DO NOT REMOVE
+};
+
+/** Large seaplane kerb terminal. */
+static const AirportMovingData _airport_moving_data_seaplane_kerb_large[46] = {
+	{   92,   44, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 00 Slot 1 alongside the dock
+	{   74,   44, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 01 Slot 2 alongside the dock
+	{   56,   44, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 02 Slot 3 alongside the dock
+	{   38,   44, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 03 Slot 4 alongside the dock
+	{  100,   32, {},                                                                         Direction::N  }, // 04 Lane beside slot 1
+	{   82,   32, {},                                                                         Direction::N  }, // 05 Lane beside slot 2
+	{   64,   32, {},                                                                         Direction::N  }, // 06 Lane beside slot 3
+	{   46,   32, {},                                                                         Direction::N  }, // 07 Lane beside slot 4
+	{   20,   68, {AirportMovingDataFlag::ExactPosition},                                     Direction::SW }, // 08 Slot 5 alongside the dock
+	{   38,   68, {AirportMovingDataFlag::ExactPosition},                                     Direction::SW }, // 09 Slot 6 alongside the dock
+	{   56,   68, {AirportMovingDataFlag::ExactPosition},                                     Direction::SW }, // 10 Slot 7 alongside the dock
+	{   74,   68, {AirportMovingDataFlag::ExactPosition},                                     Direction::SW }, // 11 Slot 8 alongside the dock
+	{   12,   80, {},                                                                         Direction::N  }, // 12 Lane beside slot 5
+	{   30,   80, {},                                                                         Direction::N  }, // 13 Lane beside slot 6
+	{   48,   80, {},                                                                         Direction::N  }, // 14 Lane beside slot 7
+	{   66,   80, {},                                                                         Direction::N  }, // 15 Lane beside slot 8
+	{   24,   32, {},                                                                         Direction::N  }, // 16 North lane: north-east end
+	{    8,    8, {},                                                                         Direction::N  }, // 17 Enter the departure half of the north runway
+	{   56,    8, {AirportMovingDataFlag::ExactPosition},                                     Direction::NE }, // 18 Line up on the north runway
+	{    2,    8, {AirportMovingDataFlag::NoSpeedClamp},                                      Direction::N  }, // 19 End of the departure run, north runway
+	{  -50,    8, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Takeoff},      Direction::N  }, // 20 Take off from the north runway
+	{  170,    8, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 21 Final approach fix, north runway
+	{  106,    8, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Land},         Direction::N  }, // 22 Touch down on the north runway
+	{   64,    8, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Brake},        Direction::N  }, // 23 Stop on the north runway, holding short
+	{   84,   20, {},                                                                         Direction::N  }, // 24 Leave the north runway for the north lane
+	{  103,   19, {AirportMovingDataFlag::ExactPosition},                                     Direction::SE }, // 25 In the north hangar
+	{  106,   38, {},                                                                         Direction::N  }, // 26 Outside the north hangar
+	{   20,   22, {},                                                                         Direction::N  }, // 27 Path to the north hangar
+	{   92,   24, {},                                                                         Direction::N  }, // 28 Path to the north hangar
+	{   90,   80, {},                                                                         Direction::N  }, // 29 South lane: south-west end
+	{  106,  104, {},                                                                         Direction::N  }, // 30 Enter the departure half of the south runway
+	{   56,  104, {AirportMovingDataFlag::ExactPosition},                                     Direction::SW }, // 31 Line up on the south runway
+	{  110,  104, {AirportMovingDataFlag::NoSpeedClamp},                                      Direction::N  }, // 32 End of the departure run, south runway
+	{  170,  104, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Takeoff},      Direction::N  }, // 33 Take off from the south runway
+	{  -60,  104, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 34 Final approach fix, south runway
+	{    6,  104, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Land},         Direction::N  }, // 35 Touch down on the south runway
+	{   48,  104, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::Brake},        Direction::N  }, // 36 Stop on the south runway, holding short
+	{   28,   92, {},                                                                         Direction::N  }, // 37 Leave the south runway for the south lane
+	{  103,   83, {AirportMovingDataFlag::ExactPosition},                                     Direction::SE }, // 38 In the south hangar
+	{  104,   96, {},                                                                         Direction::N  }, // 39 Outside the south hangar
+	{   90,   92, {},                                                                         Direction::N  }, // 40 Return path from the south hangar
+	{    8,   90, {},                                                                         Direction::N  }, // 41 Return path to the south lane
+	{   60,  -60, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 42 Holding (north-west)
+	{  -60,   40, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 43 Holding (north-east)
+	{   60,  170, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 44 Holding (south-east)
+	{  170,   70, {AirportMovingDataFlag::NoSpeedClamp, AirportMovingDataFlag::SlowTurn},     Direction::N  }, // 45 Holding (south-west)
+};
+static const HangarTileTable _airport_depots_seaplane_kerb_large[] = { {{6, 1}, Direction::SE, 0}, {{6, 5}, Direction::SE, 1} };
+static const uint8_t _airport_terminal_seaplane_kerb_large[] = { 2, 4, 4 };
+static const uint8_t _airport_entries_seaplane_kerb_large[] = { 43, 44, 45, 42 };
+static const AirportFTAbuildup _airport_fta_seaplane_kerb_large[] = {
+	{  0, TERM1, AirportBlock::Term1, 5 },
+	{  1, TERM2, AirportBlock::Term2, 6 },
+	{  2, TERM3, AirportBlock::Term3, 7 },
+	{  3, TERM4, AirportBlock::Term4, 16 },
+	{  4, TERMGROUP, AirportBlock::SeaTaxi1, 0 }, {  4, TERM1, AirportBlock::Term1, 0 }, {  4, TO_ALL, {}, 5 },
+	{  5, TERMGROUP, AirportBlock::SeaTaxi2, 0 }, {  5, TERM2, AirportBlock::Term2, 1 }, {  5, TO_ALL, {}, 6 },
+	{  6, TERMGROUP, AirportBlock::SeaTaxi3, 0 }, {  6, TERM3, AirportBlock::Term3, 2 }, {  6, TO_ALL, {}, 7 },
+	{  7, TERMGROUP, AirportBlock::SeaTaxi4, 0 }, {  7, TERM4, AirportBlock::Term4, 3 }, {  7, TO_ALL, {}, 16 },
+	{  8, TERM5, AirportBlock::Term5, 13 },
+	{  9, TERM6, AirportBlock::Term6, 14 },
+	{ 10, TERM7, AirportBlock::Term7, 15 },
+	{ 11, TERM8, AirportBlock::Term8, 29 },
+	{ 12, TERMGROUP, AirportBlock::SeaTaxi5, 0 }, { 12, TERM5, AirportBlock::Term5, 8 }, { 12, TO_ALL, {}, 13 },
+	{ 13, TERMGROUP, AirportBlock::SeaTaxi6, 0 }, { 13, TERM6, AirportBlock::Term6, 9 }, { 13, TO_ALL, {}, 14 },
+	{ 14, TERMGROUP, AirportBlock::SeaTaxi7, 0 }, { 14, TERM7, AirportBlock::Term7, 10 }, { 14, TO_ALL, {}, 15 },
+	{ 15, TERMGROUP, AirportBlock::SeaTaxi8, 0 }, { 15, TERM8, AirportBlock::Term8, 11 }, { 15, TO_ALL, {}, 29 },
+	{ 16, TERMGROUP, AirportBlock::SeaHold2, 0 }, { 16, HANGAR, {}, 27 }, { 16, TO_ALL, {}, 17 },
+	{ 17, TO_ALL, AirportBlock::SeaRunway2Depart, 18 },
+	{ 18, TAKEOFF, AirportBlock::SeaRunway2Depart, 19 },
+	{ 19, STARTTAKEOFF, AirportBlock::SeaRunway2Depart, 20 },
+	{ 20, ENDTAKEOFF, AirportBlock::Nothing, 0 },
+	{ 21, FLYING, AirportBlock::Nothing, 42 }, { 21, LANDING, AirportBlock::SeaRunway2Exit, 22 },
+	{ 22, LANDING, AirportBlock::SeaRunway2Land, 23 },
+	{ 23, TO_ALL, AirportBlock::SeaRunway2Land, 24 },
+	{ 24, ENDLANDING, AirportBlock::SeaRunway2Exit, 4 }, { 24, TERMGROUP, AirportBlock::Nothing, 0 }, { 24, TO_ALL, {}, 4 },
+	{ 25, HANGAR, AirportBlock::Nothing, 26 }, { 25, TERMGROUP, AirportBlock::Nothing, 0 }, { 25, TO_ALL, {}, 26 },
+	{ 26, TERMGROUP, AirportBlock::Hangar1Area, 0 }, { 26, HANGAR, {}, 25 }, { 26, TO_ALL, {}, 4 },
+	{ 27, TO_ALL, AirportBlock::SeaTaxi9, 28 },
+	{ 28, TO_ALL, AirportBlock::SeaTaxi9, 25 },
+	{ 29, TERMGROUP, AirportBlock::SeaHold1, 0 }, { 29, HANGAR, {}, 38 }, { 29, TO_ALL, {}, 30 },
+	{ 30, TO_ALL, AirportBlock::SeaRunway1Depart, 31 },
+	{ 31, TAKEOFF, AirportBlock::SeaRunway1Depart, 32 },
+	{ 32, STARTTAKEOFF, AirportBlock::SeaRunway1Depart, 33 },
+	{ 33, ENDTAKEOFF, AirportBlock::Nothing, 0 },
+	{ 34, FLYING, AirportBlock::Nothing, 44 }, { 34, LANDING, AirportBlock::SeaRunway1Exit, 35 },
+	{ 35, LANDING, AirportBlock::SeaRunway1Land, 36 },
+	{ 36, TO_ALL, AirportBlock::SeaRunway1Land, 37 },
+	{ 37, ENDLANDING, AirportBlock::SeaRunway1Exit, 12 }, { 37, TERMGROUP, AirportBlock::Nothing, 1 }, { 37, TO_ALL, {}, 12 },
+	{ 38, HANGAR, AirportBlock::Nothing, 39 }, { 38, TERMGROUP, AirportBlock::Nothing, 1 }, { 38, TO_ALL, {}, 39 },
+	{ 39, TERMGROUP, AirportBlock::Hangar2Area, 0 }, { 39, TAKEOFF, {}, 30 }, { 39, HANGAR, {}, 38 }, { 39, TO_ALL, {}, 40 },
+	{ 40, TO_ALL, AirportBlock::SeaTaxi10, 41 },
+	{ 41, TO_ALL, AirportBlock::SeaTaxi10, 12 },
+	{ 42, TO_ALL, AirportBlock::Nothing, 43 },
+	{ 43, TO_ALL, AirportBlock::Nothing, 34 },
+	{ 44, TO_ALL, AirportBlock::Nothing, 45 },
+	{ 45, TO_ALL, AirportBlock::Nothing, 21 },
+	{ MAX_ELEMENTS, TO_ALL, {}, 0 } // end marker. DO NOT REMOVE
+};
+
 #endif /* SEAPLANE_MOVEMENT_H */

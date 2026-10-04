@@ -75,7 +75,7 @@ Built-in terminal graphics: the water is drawn under the whole airport, and only
 |---|---|
 | Feature test name | `tgtftd_seaplanes`, version `3` (version 2 adds the seaplane dock, version 3 the kerb dock) |
 | Aircraft property (mappable, feature `03`) | `aircraft_is_seaplane` — 1 byte: `0` normal plane, `1` seaplane |
-| Airport property (mappable, feature `0D`) | `airport_seaplane_terminal` — 1 byte: `0` land airport, `1` seaplane terminal, `2` seaplane dock (version 2), `3` seaplane kerb dock (version 3) |
+| Airport property (mappable, feature `0D`) | `airport_seaplane_terminal` — 1 byte: `0` land airport, `1` seaplane terminal, `2` seaplane dock (version 2), `3`–`5` seaplane kerb terminals (version 3) |
 | Airport class of seaplane terminals | label `SEAP`, name "Seaplane terminals" |
 | Water ground sprite for airport tiles | `4061` (`0x0FDD`, `SPR_FLAT_WATER_TILE`) |
 | Built-in airport IDs (game internal) | `126` Seaplane Dock, `127` Seaplane Harbour |
@@ -237,7 +237,7 @@ Aircraft movement is fixed by the substitute's state machine, so:
 
 | Property name | Feature | Size | Values |
 |---|---|---|---|
-| `airport_seaplane_terminal` | `0D` (airports) | 1 byte | `00` = land airport (default), `01` = seaplane terminal, `02` = seaplane dock (see [5.6](#56-seaplane-docks-1-2)), `03` = seaplane kerb dock (see [5.7](#57-seaplane-kerb-docks-6-3)) |
+| `airport_seaplane_terminal` | `0D` (airports) | 1 byte | `00` = land airport (default), `01` = seaplane terminal, `02` = seaplane dock (see [5.6](#56-seaplane-docks-1-2)), `03`, `04`, `05` = seaplane kerb terminals (see [5.7](#57-seaplane-kerb-docks-6-3)) |
 
 * It must come **after property `08`**, in the same or a later Action 0, because it converts the state machine chosen by `08`.
 * Setting it to `01` also moves the airport into the *Seaplane terminals* class. Setting it back to `00` restores the substitute's land state machine and class.
@@ -349,22 +349,48 @@ An NFO Action 0 for a dock (local ID `02`, uses mapped property `F1`, name text 
 
 ### 5.7 Seaplane kerb docks (6 × 3)
 
-`airport_seaplane_terminal` = **`03`** (feature version 3) makes the airport a **seaplane kerb dock**: seaplanes pull up alongside a long dock wherever there is space, like cars at a kerb, and leave forward.
+Kerb terminals (feature version 3) work like a kerb for cars: seaplanes pull up alongside a long dock at the first free slot, nose-to-tail, and leave forward along a one-way lane. Every runway is split as in the other seaplane terminals. Property `08` still has to come first (any plane airport); set `airport_seaplane_terminal` after it. Check for version 3 (`"B" "MINV" \w2 \w3`) before using these values. Rotated layouts work as usual.
 
-* **Footprint: 6 × 3 tiles** (x = 6, y = 3 in the default rotation). Everything happens inside it, including landing and take-off, so no open water is needed around it. Rotated layouts work as usual.
-* **Eight slots**, nose-to-tail along the dock, with no hangar. A landed seaplane takes the first free slot (slot 1 is nearest the lane entry). If all slots are taken, it follows the lane, takes off again and comes back later.
-* Property `08` still has to come first (any plane airport); set `airport_seaplane_terminal` = `03` after it. It is a short strip.
+| Value | Footprint | Slots | Hangars | Runways |
+|---|---|---|---|---|
+| `03` kerb dock | 6 × 3 | 8 | none | 1 split runway inside the footprint |
+| `04` kerb terminal with hangar | 5 × 4 | 5 | 1 at tile (0, 0) | 1 split runway inside the footprint |
+| `05` large kerb terminal | 7 × 7 | 8 (4 + 4) | 2, at tiles (6, 1) and (6, 5) | 2 split runways, one per circuit |
+
+A landed seaplane takes the first free slot (slot 1 is nearest the lane entry). With no free slot it goes to the hangar if the terminal has one, otherwise it follows the lane and takes off again. Everything happens inside the footprint, so no open water is needed around these terminals.
 
 Positions, in world units from the north corner, default rotation:
 
+**`03` kerb dock (6 × 3)**
+
 | What | Position |
 |---|---|
-| Dock | along the north-west edge, y = 0–6; draw the dock here |
-| Slots 1–8 | y = 12, x = 84, 73, 62, 51, 40, 29, 18, 7; aircraft face north-east, wings over the dock |
-| Lane (one-way, towards x = 0) | y = 24, from x = 92 to x = 4 |
-| Runway | y = 40: landing half x = 92 → 54 (landed towards x = 0), departure half x = 46 → 2; departures back-taxi from x = 4 |
+| Dock | north-west edge, y = 0–6 |
+| Slots 1–8 | y = 12, x = 84, 73, 62, 51, 40, 29, 18, 7; facing north-east, wings over the dock |
+| Lane (towards x = 0) | y = 24, x = 92 → 4 |
+| Runway | y = 40: landing half x = 92 → 54 (landed towards x = 0), departure half x = 46 → 2 |
 
-Keep rows y = 12–40 free of buildings; buoys and markers are fine. Check for version 3 (`"B" "MINV" \w2 \w3`) before using `03`.
+**`04` kerb terminal with hangar (5 × 4)**
+
+| What | Position |
+|---|---|
+| Buildings | north-west row (y = 0–16); hangar at tile (0, 0), door to the south-east |
+| Dock | y = 18–23, x = 17–79 |
+| Slots 1–5 | y = 29, x = 70, 59, 48, 37, 26; facing north-east |
+| Lane (towards x = 0) | y = 41, x = 76 → 14; seaplanes for service leave it at x = 14 for the hangar |
+| Runway | y = 56: landing half x = 76 → 44, departure half x = 38 → 2 |
+| Return path from the hangar | x = 4–8 down to y = 47, then along y = 48 to the lane entry |
+
+**`05` large kerb terminal (7 × 7)**
+
+| What | North circuit | South circuit |
+|---|---|---|
+| Runway | y = 8, landed towards x = 0: landing x = 106 → 64, departure x = 56 → 2 | y = 104, landed towards x = 112: landing x = 6 → 48, departure x = 56 → 110 |
+| Lane | y = 32, towards x = 0 | y = 80, towards x = 112 |
+| Slots | 1–4 at y = 44, x = 92, 74, 56, 38, facing north-east | 5–8 at y = 68, x = 20, 38, 56, 74, facing south-west |
+| Hangar | tile (6, 1); reached along y = 22–24 from the lane end | tile (6, 5) |
+
+The central pier between the slot rows (y = 50–62) is where the terminal building goes. Keep the lanes, runways and the paths above free of buildings; buoys and markers are fine.
 
 ---
 
@@ -387,4 +413,4 @@ Keep rows y = 12–40 free of buildings; buoys and markers are fine. Check for v
 * **Multiplayer**: all players must run the same TGTFTD build, as with any patch pack.
 * **NewGRF airport slots**: the two built-in seaplane terminals use the last two of the 128 airport slots, which leaves 116 slots for NewGRF airports (JGRPP has 118).
 * **Upstream JGRPP / OpenTTD**: neither mappable property exists there. With the skips shown above, your GRF still loads; seaplanes become normal planes and seaplane terminals are skipped.
-* Property names and numbers here are **version 3** of `tgtftd_seaplanes`. Version 2 adds the seaplane dock (`airport_seaplane_terminal` = `02`), version 3 the kerb dock (`03`); everything from version 1 is unchanged. Any incompatible change will bump the feature version.
+* Property names and numbers here are **version 3** of `tgtftd_seaplanes`. Version 2 adds the seaplane dock (`airport_seaplane_terminal` = `02`), version 3 the kerb terminals (`03`–`05`); everything from version 1 is unchanged. Any incompatible change will bump the feature version.

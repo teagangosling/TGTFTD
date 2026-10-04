@@ -13,6 +13,7 @@
 #include "direction_type.h"
 #include "tile_type.h"
 
+#include <span>
 #include <vector>
 
 /** Some airport-related constants */
@@ -149,6 +150,9 @@ enum class AirportBlock : uint8_t {
 	SeaTaxi6         = 46, ///< Seaplane taxiway 6.
 	SeaTaxi7         = 47, ///< Seaplane taxiway 7.
 	SeaTaxi8         = 48, ///< Seaplane taxiway 8.
+	SeaTaxi9         = 49, ///< Seaplane taxiway 9.
+	SeaTaxi10        = 50, ///< Seaplane taxiway 10.
+	SeaHold4         = 51, ///< Seaplane holding point 4.
 
 	Nothing          = 30, ///< Nothing is blocked, for example being in the hanger.
 	Zeppeliner       = 62, ///< Block for the zeppeliner disaster vehicle.
@@ -246,6 +250,8 @@ const AirportFTAClass *GetAirport(const uint8_t airport_type);
 const AirportFTAClass *GetSeaplaneAirportFTA(const AirportFTAClass *fta);
 const AirportFTAClass *GetSeaplaneDockFTA();
 const AirportFTAClass *GetSeaplaneKerbDockFTA();
+struct HangarTileTable;
+const AirportFTAClass *GetSeaplaneKerbFTA(uint8_t variant, std::span<const HangarTileTable> &depots);
 uint8_t GetVehiclePosOnBuild(TileIndex hangar_tile);
 
 #endif /* AIRPORT_H */

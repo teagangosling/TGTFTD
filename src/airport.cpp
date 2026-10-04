@@ -80,6 +80,9 @@ SEAPLANE_AIRPORT(commuter, true)
 SEAPLANE_AIRPORT(dock, true)
 /* Seaplane kerb dock: 6x3, eight slots along a long dock, a one-way lane and a split runway; no hangar. */
 SEAPLANE_AIRPORT(kerb, true)
+/* Seaplane kerb terminal with a hangar (5x4) and large kerb terminal with two circuits (7x7). */
+SEAPLANE_AIRPORT(kerb_hangar, true)
+SEAPLANE_AIRPORT(kerb_large, false)
 
 /* The intercontinental airport already has four runways: its seaplane version uses the land state machine. */
 static const AirportFTAClass _airportfta_seaplane_intercontinental(_airport_moving_data_intercontinental, _airport_terminal_intercontinental,
@@ -253,6 +256,22 @@ const AirportFTAClass *GetSeaplaneDockFTA()
 const AirportFTAClass *GetSeaplaneKerbDockFTA()
 {
 	return &_airportfta_seaplane_kerb;
+}
+
+/**
+ * Get a seaplane kerb terminal state machine and its hangars.
+ * @param variant 3 = kerb dock (6x3, no hangar), 4 = kerb terminal with hangar (5x4), 5 = large kerb terminal (7x7, two hangars).
+ * @param[out] depots The hangars of the terminal.
+ * @return The state machine, or \c nullptr for an unknown variant.
+ */
+const AirportFTAClass *GetSeaplaneKerbFTA(uint8_t variant, std::span<const HangarTileTable> &depots)
+{
+	switch (variant) {
+		case 3: depots = {}; return &_airportfta_seaplane_kerb;
+		case 4: depots = _airport_depots_seaplane_kerb_hangar; return &_airportfta_seaplane_kerb_hangar;
+		case 5: depots = _airport_depots_seaplane_kerb_large; return &_airportfta_seaplane_kerb_large;
+		default: return nullptr;
+	}
 }
 
 /**
