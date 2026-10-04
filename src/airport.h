@@ -145,6 +145,10 @@ enum class AirportBlock : uint8_t {
 	SeaTaxi2         = 42, ///< Seaplane taxiway 2.
 	SeaTaxi3         = 43, ///< Seaplane taxiway 3.
 	SeaTaxi4         = 44, ///< Seaplane taxiway 4.
+	SeaTaxi5         = 45, ///< Seaplane taxiway 5.
+	SeaTaxi6         = 46, ///< Seaplane taxiway 6.
+	SeaTaxi7         = 47, ///< Seaplane taxiway 7.
+	SeaTaxi8         = 48, ///< Seaplane taxiway 8.
 
 	Nothing          = 30, ///< Nothing is blocked, for example being in the hanger.
 	Zeppeliner       = 62, ///< Block for the zeppeliner disaster vehicle.
@@ -241,6 +245,7 @@ public:
 const AirportFTAClass *GetAirport(const uint8_t airport_type);
 const AirportFTAClass *GetSeaplaneAirportFTA(const AirportFTAClass *fta);
 const AirportFTAClass *GetSeaplaneDockFTA();
+const AirportFTAClass *GetSeaplaneKerbDockFTA();
 uint8_t GetVehiclePosOnBuild(TileIndex hangar_tile);
 
 #endif /* AIRPORT_H */

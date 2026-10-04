@@ -75,7 +75,7 @@ extern const GRFFeatureInfo _grf_feature_list[] = {
 	GRFFeatureInfo("multi_part_ships", 3, GFTOF_MULTI_PART_SHIPS),
 	GRFFeatureInfo("more_stations_per_grf", 1),
 	GRFFeatureInfo("varaction2_house_uncapped_building_counts", 1),
-	GRFFeatureInfo("tgtftd_seaplanes", 2),
+	GRFFeatureInfo("tgtftd_seaplanes", 3),
 	GRFFeatureInfo(),
 };
 

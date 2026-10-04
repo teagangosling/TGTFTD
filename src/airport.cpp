@@ -78,6 +78,8 @@ SEAPLANE_AIRPORT(international, false)
 SEAPLANE_AIRPORT(commuter, true)
 /* Seaplane dock: a 1x2 dock with one berth and no hangar; it has no land counterpart. */
 SEAPLANE_AIRPORT(dock, true)
+/* Seaplane kerb dock: 6x3, eight slots along a long dock, a one-way lane and a split runway; no hangar. */
+SEAPLANE_AIRPORT(kerb, true)
 
 /* The intercontinental airport already has four runways: its seaplane version uses the land state machine. */
 static const AirportFTAClass _airportfta_seaplane_intercontinental(_airport_moving_data_intercontinental, _airport_terminal_intercontinental,
@@ -241,6 +243,16 @@ const AirportFTAClass *GetSeaplaneAirportFTA(const AirportFTAClass *fta)
 const AirportFTAClass *GetSeaplaneDockFTA()
 {
 	return &_airportfta_seaplane_dock;
+}
+
+/**
+ * Get the state machine of the seaplane kerb dock: a 6x3 terminal with eight slots nose-to-tail along a long dock,
+ * where seaplanes pull in at the first free slot and leave forward, with a split runway and no hangar.
+ * @return The seaplane kerb dock state machine.
+ */
+const AirportFTAClass *GetSeaplaneKerbDockFTA()
+{
+	return &_airportfta_seaplane_kerb;
 }
 
 /**

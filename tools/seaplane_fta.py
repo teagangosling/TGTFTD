@@ -43,6 +43,7 @@ NEW_BLOCKS = {
     "SeaRunway2Land": 35, "SeaRunway2Depart": 36, "SeaRunway2Exit": 37,
     "SeaHold1": 38, "SeaHold2": 39, "SeaHold3": 40,
     "SeaTaxi1": 41, "SeaTaxi2": 42, "SeaTaxi3": 43, "SeaTaxi4": 44,
+    "SeaTaxi5": 45, "SeaTaxi6": 46, "SeaTaxi7": 47, "SeaTaxi8": 48,
 }
 NOTHING = "Nothing"
 
@@ -458,7 +459,61 @@ def dock() -> Airport:
     return a
 
 
-AIRPORTS = [country, commuter, city, metropolitan, international, dock]
+def kerb() -> Airport:
+    """
+    Seaplane kerb dock (6x3): eight slots nose-to-tail along a long floating dock (y = 12), a one-way lane beside
+    them (y = 24) and a split runway inside the footprint (y = 40), so no open water is needed around it.
+    Seaplanes land towards the north-east on the south-west half of the runway, stop in the middle, enter the lane at
+    its south-west end and pull in alongside the dock at the first free slot (slot 1 is nearest the entry). They
+    leave forward onto the lane, follow it to its north-east end and take off along the north-east half. With all
+    slots taken, a landed seaplane follows the lane and takes off again. No hangar.
+    """
+    a = Airport("kerb", "Seaplane kerb dock", [1, 8], [26, 25, 28, 27], has_hangar=False)
+    xs = [84, 73, 62, 51, 40, 29, 18, 7]
+    for i, x in enumerate(xs):
+        a.pos(x, 12, EXACT, "NE", f"Slot {i + 1} alongside the dock")          # 0-7
+    for i, x in enumerate(xs):
+        a.pos(x + 8, 24, (), "N", f"Lane beside slot {i + 1}")                 # 8-15
+    a.pos(4, 24, (), "N", "North-east end of the lane")                         # 16
+    a.pos(4, 40, (), "N", "Enter the departure half")                           # 17
+    a.pos(46, 40, EXACT, "NE", "Line up: start of the departure half")          # 18
+    a.pos(2, 40, ROLL, "N", "End of the departure run")                         # 19
+    a.pos(-50, 40, LIFT, "N", "Take off")                                       # 20
+    a.pos(140, 40, AIR, "N", "Final approach fix")                              # 21
+    a.pos(92, 40, LAND, "N", "Touch down at the start of the landing half")     # 22
+    a.pos(54, 40, BRAKE, "N", "Stop, holding short of the departure half")      # 23
+    a.pos(72, 32, (), "N", "Leave the landing half for the lane")               # 24
+    a.pos(10, 130, AIR, "N", "Holding (north-east)")                            # 25
+    a.pos(10, -20, AIR, "N", "Holding (north-west)")                            # 26
+    a.pos(150, -20, AIR, "N", "Holding (south-west)")                           # 27
+    a.pos(170, 30, AIR, "N", "Holding (south)")                                 # 28
+
+    for i in range(8):
+        term = TERMINALS[i]
+        ahead = 8 + i + 1 if i < 7 else 16
+        a.on(i, term, TERM_BLOCK[term], ahead)                    # pull out forward onto the lane
+    for i in range(8):
+        term = TERMINALS[i]
+        lane = "SeaTaxi%d" % (i + 1)
+        ahead = 8 + i + 1 if i < 7 else 16
+        a.on(8 + i, TERMGROUP, lane, 0); a.on(8 + i, term, TERM_BLOCK[term], i); a.on(8 + i, "TO_ALL", (), ahead)
+    a.on(16, "TO_ALL", "SeaHold1", 17)
+    a.on(17, "TO_ALL", "SeaRunway1Depart", 18)
+    a.on(18, "TAKEOFF", "SeaRunway1Depart", 19)
+    a.on(19, "STARTTAKEOFF", "SeaRunway1Depart", 20)
+    a.on(20, "ENDTAKEOFF", NOTHING, 0)
+    a.on(21, "FLYING", NOTHING, 25); a.on(21, "LANDING", "SeaRunway1Exit", 22)
+    a.on(22, "LANDING", "SeaRunway1Land", 23)
+    a.on(23, "TO_ALL", "SeaRunway1Land", 24)
+    a.on(24, "ENDLANDING", "SeaRunway1Exit", 8); a.on(24, "TO_ALL", (), 8)
+    a.on(25, "TO_ALL", NOTHING, 26)
+    a.on(26, "TO_ALL", NOTHING, 27)
+    a.on(27, "TO_ALL", NOTHING, 28)
+    a.on(28, "TO_ALL", NOTHING, 21)
+    return a
+
+
+AIRPORTS = [country, commuter, city, metropolitan, international, dock, kerb]
 
 # ---------------------------------------------------------------------------------------------- C++ output
 
@@ -772,7 +827,7 @@ def check():
     for make in AIRPORTS:
         a = make()
         validate(a)
-        planes = {"dock": 3}.get(a.name, sum(a.terminals[1:]) * 2 + 2)
+        planes = {"dock": 3, "kerb": 12}.get(a.name, sum(a.terminals[1:]) * 2 + 2)
         results = []
         for seed in range(8):
             try:

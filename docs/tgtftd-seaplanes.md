@@ -73,9 +73,9 @@ Built-in terminal graphics: the water is drawn under the whole airport, and only
 
 | What | Value |
 |---|---|
-| Feature test name | `tgtftd_seaplanes`, version `2` (version 1 has no seaplane dock) |
+| Feature test name | `tgtftd_seaplanes`, version `3` (version 2 adds the seaplane dock, version 3 the kerb dock) |
 | Aircraft property (mappable, feature `03`) | `aircraft_is_seaplane` — 1 byte: `0` normal plane, `1` seaplane |
-| Airport property (mappable, feature `0D`) | `airport_seaplane_terminal` — 1 byte: `0` land airport, `1` seaplane terminal, `2` seaplane dock (version 2) |
+| Airport property (mappable, feature `0D`) | `airport_seaplane_terminal` — 1 byte: `0` land airport, `1` seaplane terminal, `2` seaplane dock (version 2), `3` seaplane kerb dock (version 3) |
 | Airport class of seaplane terminals | label `SEAP`, name "Seaplane terminals" |
 | Water ground sprite for airport tiles | `4061` (`0x0FDD`, `SPR_FLAT_WATER_TILE`) |
 | Built-in airport IDs (game internal) | `126` Seaplane Dock, `127` Seaplane Harbour |
@@ -237,7 +237,7 @@ Aircraft movement is fixed by the substitute's state machine, so:
 
 | Property name | Feature | Size | Values |
 |---|---|---|---|
-| `airport_seaplane_terminal` | `0D` (airports) | 1 byte | `00` = land airport (default), `01` = seaplane terminal, `02` = seaplane dock (see [5.6](#56-seaplane-docks-1-2)) |
+| `airport_seaplane_terminal` | `0D` (airports) | 1 byte | `00` = land airport (default), `01` = seaplane terminal, `02` = seaplane dock (see [5.6](#56-seaplane-docks-1-2)), `03` = seaplane kerb dock (see [5.7](#57-seaplane-kerb-docks-6-3)) |
 
 * It must come **after property `08`**, in the same or a later Action 0, because it converts the state machine chosen by `08`.
 * Setting it to `01` also moves the airport into the *Seaplane terminals* class. Setting it back to `00` restores the substitute's land state machine and class.
@@ -346,6 +346,26 @@ An NFO Action 0 for a dock (local ID `02`, uses mapped property `F1`, name text 
 
 **Check the feature version** before using `02`: on version 1 the value is read as "seaplane terminal" and gives a broken airport. Test with `"B" "MINV" \w2 \w2` in the feature test and skip the dock when the bit is clear (see [section 3](#3-detecting-tgtftd-from-a-newgrf)).
 
+
+### 5.7 Seaplane kerb docks (6 × 3)
+
+`airport_seaplane_terminal` = **`03`** (feature version 3) makes the airport a **seaplane kerb dock**: seaplanes pull up alongside a long dock wherever there is space, like cars at a kerb, and leave forward.
+
+* **Footprint: 6 × 3 tiles** (x = 6, y = 3 in the default rotation). Everything happens inside it, including landing and take-off, so no open water is needed around it. Rotated layouts work as usual.
+* **Eight slots**, nose-to-tail along the dock, with no hangar. A landed seaplane takes the first free slot (slot 1 is nearest the lane entry). If all slots are taken, it follows the lane, takes off again and comes back later.
+* Property `08` still has to come first (any plane airport); set `airport_seaplane_terminal` = `03` after it. It is a short strip.
+
+Positions, in world units from the north corner, default rotation:
+
+| What | Position |
+|---|---|
+| Dock | along the north-west edge, y = 0–6; draw the dock here |
+| Slots 1–8 | y = 12, x = 84, 73, 62, 51, 40, 29, 18, 7; aircraft face north-east, wings over the dock |
+| Lane (one-way, towards x = 0) | y = 24, from x = 92 to x = 4 |
+| Runway | y = 40: landing half x = 92 → 54 (landed towards x = 0), departure half x = 46 → 2; departures back-taxi from x = 4 |
+
+Keep rows y = 12–40 free of buildings; buoys and markers are fine. Check for version 3 (`"B" "MINV" \w2 \w3`) before using `03`.
+
 ---
 
 ## 6. Testing and debugging
@@ -367,4 +387,4 @@ An NFO Action 0 for a dock (local ID `02`, uses mapped property `F1`, name text 
 * **Multiplayer**: all players must run the same TGTFTD build, as with any patch pack.
 * **NewGRF airport slots**: the two built-in seaplane terminals use the last two of the 128 airport slots, which leaves 116 slots for NewGRF airports (JGRPP has 118).
 * **Upstream JGRPP / OpenTTD**: neither mappable property exists there. With the skips shown above, your GRF still loads; seaplanes become normal planes and seaplane terminals are skipped.
-* Property names and numbers here are **version 2** of `tgtftd_seaplanes`. Version 2 adds the seaplane dock (`airport_seaplane_terminal` = `02`); everything from version 1 is unchanged. Any incompatible change will bump the feature version.
+* Property names and numbers here are **version 3** of `tgtftd_seaplanes`. Version 2 adds the seaplane dock (`airport_seaplane_terminal` = `02`), version 3 the kerb dock (`03`); everything from version 1 is unchanged. Any incompatible change will bump the feature version.
