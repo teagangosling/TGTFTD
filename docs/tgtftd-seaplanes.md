@@ -206,6 +206,14 @@ Only airports that planes can use have a water version. Heliports (`02`, `06`, `
 
 Coordinates are tile offsets (x, y) from the north corner, for the default rotation.
 
+**Seaplanes need less room than land planes.** The water version of each state machine keeps all ground positions (taxiways, berths, hangars, the end of the landing run), but its flight paths are tighter:
+
+* seaplanes touch down at 40% of the land runway's length from the end of the landing run, so the landing run on the water is short;
+* the final approach starts halfway as far out;
+* the holding pattern and approach fixes are pulled in to 60% of their distance from the middle of the airport.
+
+Waiting seaplanes therefore get a landing chance much more often, and the runway is free again sooner.
+
 Aircraft movement is fixed by the substitute's state machine, so:
 
 * **Keep the footprint size of the substitute.** The runway(s), berths and hangar(s) are where the table says, whatever your tiles look like.
@@ -307,7 +315,7 @@ Positions, in world units (16 per tile) from the north corner, default rotation:
 | What | Position | Notes |
 |---|---|---|
 | Berth | (10, 16) | Aircraft faces north-west, beside a dock drawn along the north-east edge (x = 0–5) |
-| Water lane | x = 24, from y = 48 to y = 0 | **Outside the footprint**, in the water next to the dock. Seaplanes land heading north-west, turn round and taxi to the berth; they take off from (24, 44) heading north-west |
+| Water lane | x = 24, from y = 44 to y = 0 | **Outside the footprint**, in the water next to the dock. Seaplanes come in on a short final from about (24, 98), touch down at (24, 19) heading north-west, stop at (24, 0), turn round and taxi to the berth; they take off from (24, 44) heading north-west |
 
 * A seaplane only lands when the berth is free; otherwise it circles.
 * The water lane is not part of the station, so leave open water on the south-west side of the dock (towards +x) when you build it, the same way you would leave room for any landing aircraft.
