@@ -32,7 +32,7 @@ BUNDLES = ("openttd-windows-", "openttd-macos-")
 BODY = """TGTFTD build {version}, based on JGR's Patch Pack.
 
 * **Windows (x64)**: download the `windows-win64` zip, extract it and run `openttd.exe`.
-* **macOS (Apple Silicon, M1 or newer)**: download the `macos` zip (or the `.dmg`) and extract it. The app is not signed by Apple: right-click it and choose **Open** the first time, or run `xattr -dr com.apple.quarantine /path/to/OpenTTD.app`.
+* **macOS (Apple Silicon, M1 or newer)**: download the `macos` zip (or the `.dmg`) and extract it. The app isn't notarized by Apple, so the first time you open it macOS says it can't verify it: click **Done**, then go to **System Settings > Privacy & Security**, scroll down and click **Open Anyway** next to OpenTTD. (Or run `xattr -dr com.apple.quarantine /path/to/OpenTTD.app`.)
 
 You still need base graphics (OpenGFX can be downloaded from the in-game "Check online content" menu, or copy the original TTD files).
 

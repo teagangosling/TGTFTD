@@ -86,6 +86,9 @@ jobs:
         mkdir build-arm64
         cd build-arm64
 
+        # TGTFTD: without a Developer ID certificate, CPACK_BUNDLE_APPLE_CERT_APP is "-" and CPack signs the
+        # bundle ad hoc. Unsigned (only the linker's signature on the executable), macOS calls it "damaged"
+        # once downloaded.
         echo "::group::CMake"
         cmake ${GITHUB_WORKSPACE} \
           -DCMAKE_OSX_ARCHITECTURES=arm64 \
@@ -95,7 +98,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release \
           -DOPTION_TRIM_PATH_PREFIX=ON \
           -DOPTION_SURVEY_KEY=${{ inputs.survey_key }} \
-          -DCPACK_BUNDLE_APPLE_CERT_APP=${{ secrets.APPLE_DEVELOPER_CERTIFICATE_ID }} \
+          -DCPACK_BUNDLE_APPLE_CERT_APP=${{ secrets.APPLE_DEVELOPER_CERTIFICATE_ID || '-' }} \
           "-DCPACK_BUNDLE_APPLE_CODESIGN_PARAMETER=--deep -f --options runtime" \
           # EOF
         echo "::endgroup::"
@@ -119,6 +122,21 @@ jobs:
         # the end of this workflow.
         rm -f bundles/*.sha256
         echo "::endgroup::"
+
+    - name: Verify code signature
+      run: |
+        cd build-arm64
+
+        # TGTFTD: fail the release rather than ship a bundle macOS calls "damaged".
+        app=$(echo _CPack_Packages/*/Bundle/openttd-*/OpenTTD.app)
+        codesign --verify --deep --strict --verbose=2 "$app"
+        codesign -dv "$app" 2>&1 | grep -q "^Sealed Resources" || { echo "::error::OpenTTD.app has no sealed resources"; exit 1; }
+
+        dmg=$(echo bundles/*.dmg)
+        mnt=$(mktemp -d)
+        hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$dmg"
+        codesign --verify --deep --strict --verbose=2 "$mnt/OpenTTD.app"
+        hdiutil detach "$mnt"
 
     - name: Notarize
       env:
