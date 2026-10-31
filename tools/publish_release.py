@@ -10,8 +10,9 @@ Releases are created locally, not by GitHub Actions: the Actions token may not c
 * --run: the Release workflow run to publish (default: the newest one).
 * --wait: wait for the Windows and macOS builds of that run to finish first.
 * --tag: the release tag; by default the version the run's Source job determined (e.g. tgtftd-0.1.1), read from its log.
-  (The bundle file names use the version data committed in the source, e.g. jgrpp-0.73.3, so they don't give the tag.) Each Actions artifact is a
-zip wrapping the real bundle files; they are unwrapped, so the release has the plain .zip/.dmg files (no zip in a zip).
+
+Each Actions artifact is a zip wrapping the real bundle files; they are unwrapped, so the release has the plain
+.zip/.dmg files (no zip in a zip).
 Re-running replaces assets with the same name. Authentication uses the GitHub credentials stored for git.
 """
 
