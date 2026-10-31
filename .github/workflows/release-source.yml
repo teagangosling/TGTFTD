@@ -97,6 +97,10 @@ jobs:
       run: |
         echo "::group::Prepare metadata files"
         cmake -DGENERATE_OTTDREV=.ottdrev -P cmake/scripts/FindVersion.cmake
+        # TGTFTD: the committed .ottdrev-vc is JGRPP's (jgrpp-0.73.3, with a hash of JGRPP's source), and builds
+        # from the source bundle read it in place of git. Rewrite it for this source: every platform then reports
+        # this TGTFTD version, and macOS no longer appends -H<hash> (Windows, which can't hash, never did).
+        ./version_utils.sh -w
         TZ='UTC' date +"%Y-%m-%d %H:%M UTC" > .release_date
         head -1 .ottdrev | cut -f 1 -d$'\t' > .version
 
@@ -145,7 +149,7 @@ jobs:
         echo "::endgroup::"
 
         echo "Release Date: $(cat .release_date)"
-        echo "Revision: $(cat .ottdrev-vc)"
+        echo "Revision: $(head -1 .ottdrev-vc)"
         echo "Version: $(cat .version)"
         echo "Is tag: ${IS_TAG}"
         echo "Folder on CDN: ${FOLDER}"

@@ -10,8 +10,9 @@ Releases are created locally, not by GitHub Actions: the Actions token may not c
 * --run: the Release workflow run to publish (default: the newest one).
 * --wait: wait for the Windows and macOS builds of that run to finish first.
 * --tag: the release tag; by default the version the run's Source job determined (e.g. tgtftd-0.1.1), read from its log.
-  (The bundle file names use the version data committed in the source, e.g. jgrpp-0.73.3, so they don't give the tag.) Each Actions artifact is a
-zip wrapping the real bundle files; they are unwrapped, so the release has the plain .zip/.dmg files (no zip in a zip).
+
+Each Actions artifact is a zip wrapping the real bundle files; they are unwrapped, so the release has the plain
+.zip/.dmg files (no zip in a zip).
 Re-running replaces assets with the same name. Authentication uses the GitHub credentials stored for git.
 """
 
@@ -32,7 +33,7 @@ BUNDLES = ("openttd-windows-", "openttd-macos-")
 BODY = """TGTFTD build {version}, based on JGR's Patch Pack.
 
 * **Windows (x64)**: download the `windows-win64` zip, extract it and run `openttd.exe`.
-* **macOS (Apple Silicon, M1 or newer)**: download the `macos` zip (or the `.dmg`) and extract it. The app is not signed by Apple: right-click it and choose **Open** the first time, or run `xattr -dr com.apple.quarantine /path/to/OpenTTD.app`.
+* **macOS (Apple Silicon, M1 or newer)**: download the `macos` zip (or the `.dmg`) and extract it. The app isn't notarized by Apple, so the first time you open it macOS says it can't verify it: click **Done**, then go to **System Settings > Privacy & Security**, scroll down and click **Open Anyway** next to OpenTTD. (Or run `xattr -dr com.apple.quarantine /path/to/OpenTTD.app`.)
 
 You still need base graphics (OpenGFX can be downloaded from the in-game "Check online content" menu, or copy the original TTD files).
 
