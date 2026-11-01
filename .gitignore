@@ -11,3 +11,6 @@ docs/source/*
 
 # Python caches of the tools/ scripts
 __pycache__/
+
+# PNW scenario download cache
+tools/.pnw_cache/
