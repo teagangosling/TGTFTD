@@ -1,0 +1,91 @@
+# BC municipalities with a 1991 census population of at least 2,000 (plus Tofino and Ucluelet) near the PNW scenario map.
+# Populations are Statistics Canada 1991 census figures as recalled for this list (not machine-extracted);
+# treat them as approximate. Coordinates are town centres. Places outside the map are dropped by the script.
+# Unincorporated communities (no 1991 municipal count) follow the municipalities, with approximate populations.
+name,pop1991,lat,lon
+Vancouver,471844,49.2827,-123.1207
+Surrey,245173,49.1913,-122.8490
+Burnaby,158858,49.2488,-122.9805
+Richmond,126624,49.1666,-123.1336
+Saanich,95577,48.4840,-123.3810
+Delta,88978,49.0847,-123.0586
+Coquitlam,84021,49.2838,-122.7932
+North Vancouver District,75157,49.3200,-123.0700
+Kelowna,75950,49.8880,-119.4960
+Victoria,71228,48.4284,-123.3656
+Langley Township,66040,49.1040,-122.5800
+Nanaimo,60129,49.1659,-123.9401
+Matsqui,51449,49.0800,-122.3000
+Chilliwack,49531,49.1579,-121.9515
+Maple Ridge,48422,49.2194,-122.5984
+New Westminster,43585,49.2057,-122.9110
+West Vancouver,38783,49.3286,-123.1602
+North Vancouver,38436,49.3200,-123.0724
+Port Coquitlam,36773,49.2625,-122.7811
+Penticton,27258,49.4991,-119.5937
+Mission,26202,49.1330,-122.3089
+North Cowichan,21373,48.8400,-123.7200
+Langley,19765,49.1044,-122.6604
+Abbotsford,18864,49.0504,-122.3045
+Port Alberni,18403,49.2339,-124.8055
+Oak Bay,17815,48.4264,-123.3170
+Port Moody,17712,49.2849,-122.8678
+White Rock,16314,49.0253,-122.8026
+Esquimalt,16192,48.4300,-123.4140
+Central Saanich,13684,48.5900,-123.4200
+Colwood,13468,48.4236,-123.4958
+Powell River,12991,49.8353,-124.5247
+Squamish,11709,49.7016,-123.1558
+Courtenay,11652,49.6878,-124.9936
+Pitt Meadows,11147,49.2210,-122.6894
+Comox,10463,49.6735,-124.9283
+Sidney,10082,48.6503,-123.3986
+North Saanich,9645,48.6667,-123.4167
+Summerland,8858,49.6006,-119.6778
+Parksville,7001,49.3150,-124.3120
+View Royal,6441,48.4517,-123.4339
+Sechelt,6150,49.4742,-123.7545
+Kent,4645,49.2350,-121.7600
+Ladysmith,4875,48.9975,-123.8180
+Duncan,4408,48.7787,-123.7079
+Qualicum Beach,4409,49.3500,-124.4333
+Peachland,3712,49.7740,-119.7365
+Oliver,3743,49.1828,-119.5504
+Osoyoos,3403,49.0323,-119.4682
+Metchosin,4462,48.3820,-123.5380
+Hope,3147,49.3858,-121.4419
+Gibsons,3014,49.3975,-123.5052
+Princeton,2826,49.4590,-120.5060
+Cumberland,2548,49.6200,-125.0300
+Lake Cowichan,2234,48.8250,-124.0540
+Ucluelet,1658,48.9420,-125.5466
+Tofino,1103,49.1530,-125.9066
+Langford,15000,48.4500,-123.5050
+Sooke,7500,48.3740,-123.7270
+Ganges,8000,48.8550,-123.5080
+Chemainus,3900,48.9230,-123.7150
+Lantzville,3000,49.2500,-124.0700
+Shawnigan Lake,3500,48.6530,-123.6290
+Mill Bay,2500,48.6500,-123.5500
+Royston,1500,49.6470,-124.9460
+Bowen Island,2200,49.3800,-123.3600
+Madeira Park,1500,49.6230,-124.0230
+Lund,300,49.9800,-124.7600
+Harrison Hot Springs,800,49.2990,-121.7850
+Keremeos,1000,49.2020,-119.8290
+Hedley,300,49.3560,-120.0750
+Boston Bar,800,49.8650,-121.4420
+Yale,200,49.5620,-121.4310
+Port Renfrew,300,48.5550,-124.4210
+Bamfield,300,48.8320,-125.1360
+Youbou,1200,48.8700,-124.2000
+Honeymoon Bay,500,48.8150,-124.1700
+Fanny Bay,700,49.4940,-124.8260
+Bowser,600,49.4400,-124.6750
+Galiano,900,48.9270,-123.4440
+Pender Island,1600,48.7700,-123.2800
+Gabriola,2500,49.1600,-123.8300
+Egmont,200,49.7500,-123.9300
+Britannia Beach,300,49.6220,-123.2030
+Sunshine Valley,200,49.2800,-121.2300
+Manning Park,100,49.0650,-120.7850
