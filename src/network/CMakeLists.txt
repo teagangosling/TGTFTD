@@ -14,6 +14,8 @@ add_files(
     network_content.h
     network_content_gui.cpp
     network_content_gui.h
+    network_coastal_grfs.cpp
+    network_coastal_grfs.h
     network_coordinator.cpp
     network_coordinator.h
     network_crypto.cpp

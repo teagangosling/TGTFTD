@@ -94,6 +94,7 @@
 #include "worker_thread.h"
 #include "scope_info.h"
 #include "network/network_survey.h"
+#include "network/network_coastal_grfs.h"
 #include "time_chrono.h"
 #include "timer/timer.h"
 #include "timer/timer_game_realtime.h"
@@ -1035,6 +1036,9 @@ int openttd_main(std::span<char * const> arguments)
 
 	/* ScanNewGRFFiles now has control over the scanner. */
 	RequestNewGRFScan(scanner.release());
+
+	/* TGTFTD: fetch newer Coastal GrfLink GRFs in the background. */
+	if (_network_available) NetworkCoastalGrfSync();
 
 	_general_worker_pool.Start("ottd:worker", 8);
 
