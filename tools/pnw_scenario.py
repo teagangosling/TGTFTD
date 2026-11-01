@@ -10,6 +10,13 @@ docs/superpowers/specs/2026-10-31-pnw-scenario-design.md.
     python tools/pnw_scenario.py --build    # write pnw_1990.png, pnw_1990.json and pnw_1990_preview.png
 
 Downloads are cached in tools/.pnw_cache/.
+
+Assembling the scenario (scenario editor, no NewGRFs):
+  1. Settings: town minimum distance 10.
+  2. Load heightmap pnw_1990.png: map 2048x2048, climate Sub-arctic, highest peak 15, rotation clockwise,
+     start date 1 Jan 1990, no towns, no industries. Then set the snow line height to 10.
+  3. Town generation -> Load from file -> pnw_1990.json. Failed towns are left as signs; place those by hand.
+  4. Save the scenario as "PNW 1990".
 """
 
 import csv
