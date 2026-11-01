@@ -89,3 +89,17 @@ Industries are out of scope here.
 ## Left to the builder
 - DEM resampling/smoothing and handling of narrow channels.
 - Exact source for 1990/1991 census place lists and coordinates.
+
+## Revisions after the first build (user, 2026-10-31)
+- Climate **temperate** (green ground; no snow). The FIRS fork's PNW economy must therefore be a temperate one.
+- Heightmap rotation **counter-clockwise**.
+- **Water above sea level**: all OSM lakes and rivers at their real height (Okanagan Lake, Chelan, upper Fraser and
+  Columbia). Water below ~57 m (land level 1) stays sea-level water; higher water is written to a companion image
+  `pnw_1990.layers.png` that the fork's heightmap import turns into river-class water (no flooding). Banks are
+  levelled so lake tiles are flat.
+- **Major rivers widened** to at least 3 tiles: Fraser, Columbia, Willamette, Skagit, Cowlitz, Snohomish (OSM
+  centre lines). A deliberate exaggeration; everything else stays true width.
+- **Trees** from the Hansen Global Forest Change canopy cover (2000): under 30% none, then 1–4 trees per tile, via the
+  same companion image.
+- **Towns**: Tofino and Ucluelet kept under 2,000; smaller places (>= 250 people) fill gaps of >= 40 tiles from any
+  town; census areas named "<direction> <neighbouring town>" take their own other name or the nearest OSM suburb.

@@ -20,6 +20,8 @@
 #include "fileio_func.h"
 #include "tile_map_extra.h"
 #include "core/random_func.hpp"
+#include "tree_cmd.h"
+#include "water_map.h"
 
 #include "table/strings.h"
 
@@ -324,8 +326,10 @@ static bool ReadHeightmapBMP(std::string_view filename, uint *x, uint *y, std::v
  * @param img_width  the with of the image in pixels/tiles
  * @param img_height the height of the image in pixels/tiles
  * @param map        the input map
+ * @param layers     optional companion image of the same size, see #ApplyHeightmapLayers
+ * @param[out] tile_layers per tile, the companion image pixel it was made from (when \a layers is not empty)
  */
-static void GreyscaleToMapHeights(uint img_width, uint img_height, std::span<const uint8_t> map)
+static void GreyscaleToMapHeights(uint img_width, uint img_height, std::span<const uint8_t> map, std::span<const uint8_t> layers, std::vector<uint8_t> &tile_layers)
 {
 	/* Defines the detail of the aspect ratio (to avoid doubles) */
 	const uint num_div = 16384;
@@ -408,6 +412,7 @@ static void GreyscaleToMapHeights(uint img_width, uint img_height, std::span<con
 				}
 
 				SetTileHeight(tile, heightmap_height);
+				if (!layers.empty()) tile_layers[tile.base()] = layers[img_row * img_width + img_col];
 			}
 			/* Only clear the tiles within the map area. */
 			if (IsInnerTile(tile)) {
@@ -496,6 +501,29 @@ void FixSlopes()
 }
 
 /**
+ * Apply a heightmap's companion layer image once the heights are final.
+ * Pixel 255 makes river water at the tile's own height (lakes and rivers above sea level),
+ * pixels 1 to 4 plant that many trees; anything else leaves the tile alone.
+ * Water needs a flat or evenly inclined tile, so it is skipped elsewhere.
+ * @param tile_layers The layer pixel of each tile.
+ */
+static void ApplyHeightmapLayers(std::span<const uint8_t> tile_layers)
+{
+	for (TileIndex tile(0); tile < Map::Size(); ++tile) {
+		uint8_t layer = tile_layers[tile.base()];
+		if (layer == 0 || !IsTileType(tile, TileType::Clear) || IsClearGround(tile, ClearGround::Rocks)) continue;
+
+		if (layer == 255) {
+			Slope slope = GetTileSlope(tile);
+			if (slope == SLOPE_FLAT || IsInclinedSlope(slope)) MakeRiver(tile, GB(Random(), 0, 8));
+		} else if (layer <= 4) {
+			/* PlaceTree takes the number of trees minus one from bits 22-23. */
+			PlaceTree(tile, (Random() & ~(3U << 22)) | ((layer - 1U) << 22));
+		}
+	}
+}
+
+/**
  * Reads the heightmap with the correct file reader.
  * @param dft Type of image file.
  * @param filename Name of the file to load.
@@ -550,9 +578,21 @@ bool LoadHeightmap(DetailedFileType dft, std::string_view filename)
 		return false;
 	}
 
-	GreyscaleToMapHeights(x, y, map);
+	/* Optional companion image "<name>.layers.png" with water above sea level and trees. */
+	std::vector<uint8_t> layers, tile_layers;
+	if (dft == DetailedFileType::HeightmapPng && filename.ends_with(".png")) {
+		std::string layers_name = fmt::format("{}.layers.png", filename.substr(0, filename.size() - 4));
+		uint lx, ly;
+		if (FioCheckFileExists(layers_name, Subdirectory::Heightmap) && ReadHeightMap(dft, layers_name, &lx, &ly, &layers) && (lx != x || ly != y)) {
+			layers.clear();
+		}
+		if (!layers.empty()) tile_layers.resize(Map::Size());
+	}
+
+	GreyscaleToMapHeights(x, y, map, layers, tile_layers);
 
 	FixSlopes();
+	if (!tile_layers.empty()) ApplyHeightmapLayers(tile_layers);
 	MarkWholeScreenDirty();
 
 	return true;
