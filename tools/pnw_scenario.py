@@ -14,7 +14,7 @@ Downloads are cached in tools/.pnw_cache/.
 Assembling the scenario (scenario editor, no NewGRFs):
   1. Settings: town minimum distance 10.
   2. Load heightmap pnw_1990.png: map 2048x2048, climate Sub-arctic, highest peak 15, rotation clockwise,
-     start date 1 Jan 1990, no towns, no industries. Then set the snow line height to 10.
+     start date 1 Jan 1990, no towns, no industries, snow line height 10 (as snow coverage: about 29%).
   3. Town generation -> Load from file -> pnw_1990.json. Failed towns are left as signs; place those by hand.
   4. Save the scenario as "PNW 1990".
 """
@@ -134,6 +134,10 @@ def select_towns(places):
             for n, p, c, r, _ in kept]
 
 
+# Gazetteer points that sit far out in the water, replaced by the town centre.
+PLACE_FIXES = {("Port Angeles", "WA"): (48.118, -123.430)}
+
+
 def load_places():
     """1990 US census places in WA and OR, and BC municipalities from the 1991 census list."""
     z = fetch("https://www2.census.gov/geo/docs/maps-data/data/gazetteer/places.zip", CACHE / "places1990.zip")
@@ -143,7 +147,9 @@ def load_places():
         name, state, pop, _, _, _, lat, lon = line[9:].rsplit(None, 7)
         if state in ("WA", "OR"):
             head, _, kind = name.rpartition(" ")
-            places.append((head if kind in ("city", "town", "CDP") else name, int(pop), int(lat) / 1e6, int(lon) / 1e6, state))
+            name = head if kind in ("city", "town", "CDP") else name
+            lat, lon = PLACE_FIXES.get((name, state), (int(lat) / 1e6, int(lon) / 1e6))
+            places.append((name, int(pop), lat, lon, state))
     with open(ROOT / "tools" / "pnw_scenario_bc_1991.csv", encoding="utf-8") as f:
         for row in csv.DictReader(line for line in f if not line.startswith("#")):
             places.append((row["name"], int(row["pop1991"]), float(row["lat"]), float(row["lon"]), "BC"))
@@ -163,6 +169,8 @@ def check_towns():
     c, r = to_pixel(47.6062, -122.3321)
     assert abs(t["Seattle"]["x"] - (int(r) + 0.5) / SIZE) < 1e-9 and abs(t["Seattle"]["y"] - (int(c) + 0.5) / SIZE) < 1e-9
     assert len({d["name"] for d in t.values()}) == len(t)
+    pa = [pl for pl in load_places() if pl[0] == "Port Angeles"]
+    assert pa and abs(pa[0][2] - 48.118) < 1e-6, pa  # the gazetteer point is offshore in the Strait
     print("towns ok")
 
 
@@ -342,6 +350,11 @@ def build():
     print(f"towns: {len(towns)} kept of {sum(p[1] >= 2000 for p in places)} with 2,000+ people (some outside the map)")
     wet = [t["name"] for t in towns if w[int(t["x"] * SIZE), int(t["y"] * SIZE)]]
     print(f"towns on a water pixel ({len(wet)}): {', '.join(wet)}")
+    # LoadTownData searches 16 tiles around the point; beyond that the town becomes a sign.
+    lost = [t["name"] for t in towns if w[max(0, int(t["x"] * SIZE) - 16):int(t["x"] * SIZE) + 17,
+                                         max(0, int(t["y"] * SIZE) - 16):int(t["y"] * SIZE) + 17].all()]
+    if lost:
+        print(f"WARNING: no land within 16 tiles, these will fail to import: {', '.join(lost)}")
     (OUT_DIR / "pnw_1990.json").write_text(json.dumps(towns, indent=1), encoding="utf-8")
     preview(lv, towns)
 
